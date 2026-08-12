@@ -9,178 +9,191 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Raleway:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --papel:#FBFAF7; --papel-alt:#F4F1E8; --papel-fundo:#F6F4EF;
-  --navy:#0B1D3A; --navy-mid:#1A3358; --navy-claro:#3E5679;
-  --gold:#A8842F; --gold-claro:#C4A45A; --gold-pale:#E8D9B0;
-  --tinta:rgba(11,29,58,.88); --suave:rgba(11,29,58,.52); --linha:rgba(11,29,58,.13);
-  --ok:#4E7C5B; --alerta:#B4674E; --erro:#A8503F;
+  /* Burgundy conduz; o dourado vira acento raro; o papel é marfim quente. */
+  --vinho:#6E1F2E; --vinho-fundo:#4A1420; --vinho-claro:#9C4257; --vinho-tenue:rgba(110,31,46,.14);
+  --blush:#F7ECEA; --marfim:#FCFAF7; --areia:#F3EEE6; --pergaminho:#EFE8DC;
+  --ouro:#A87F3E; --ouro-claro:#C9A467;
+  --tinta:#1E1417; --tinta-suave:rgba(30,20,23,.74); --linha:rgba(30,20,23,.17);
+  --ok:#4F7A5E; --erro:#A8452F;
   --serif:'Cormorant Garamond',Georgia,serif;
   --sans:'Raleway',system-ui,sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
 body{
-  background:var(--papel); color:var(--tinta); font-family:var(--sans);
-  font-weight:300; -webkit-font-smoothing:antialiased;
-  background-image:radial-gradient(circle at 15% -10%,rgba(196,164,90,.16),transparent 55%),
-                   radial-gradient(rgba(11,29,58,.055) 1px,transparent 1px);
-  background-size:auto,26px 26px;
+  background:var(--marfim); color:var(--tinta); font-family:var(--sans);
+  font-weight:400; -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(circle at 12% -8%,rgba(110,31,46,.10),transparent 52%),
+                   radial-gradient(circle at 92% 4%,rgba(168,127,62,.09),transparent 44%),
+                   radial-gradient(rgba(46,33,38,.05) 1px,transparent 1px);
+  background-size:auto,auto,28px 28px;
 }
 button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--gold-claro);outline-offset:2px}
-::selection{background:rgba(196,164,90,.28)}
+:focus-visible{outline:2px solid var(--vinho-claro);outline-offset:2px}
+::selection{background:rgba(110,31,46,.16)}
 
 /* ─── ESTRUTURA ─── */
 #app{display:flex;min-height:100vh;flex-direction:column;animation:surgir .5s ease}
 @keyframes surgir{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 header.topo{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:22px;
-  padding:15px 26px;background:rgba(251,250,247,.93);backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--linha);box-shadow:0 1px 0 rgba(196,164,90,.28)}
+  padding:16px 26px;background:rgba(252,250,247,.94);backdrop-filter:blur(12px);
+  border-top:3px solid var(--vinho);border-bottom:1px solid var(--linha);
+  box-shadow:0 1px 0 rgba(168,127,62,.32)}
 .topo .marca{font-family:var(--serif);font-size:12px;letter-spacing:.4em;
-  color:var(--gold);text-transform:uppercase;white-space:nowrap}
-.topo .marca span{display:block;font-size:8.5px;letter-spacing:.28em;color:var(--suave);margin-top:3px}
-.topo .titulo{font-family:var(--serif);font-size:20px;font-weight:400;letter-spacing:.02em;
-  color:var(--navy);border-left:1px solid var(--linha);padding-left:22px}
-.topo .titulo em{font-style:italic;color:var(--gold)}
+  color:var(--vinho);text-transform:uppercase;white-space:nowrap}
+.topo .marca span{display:block;font-size:8.5px;letter-spacing:.28em;color:var(--tinta-suave);margin-top:3px}
+.topo .titulo{font-family:var(--serif);font-size:21px;font-weight:400;letter-spacing:.02em;
+  color:var(--tinta);border-left:1px solid var(--linha);padding-left:22px}
+.topo .titulo em{font-style:italic;color:var(--vinho)}
 .topo .dir{margin-left:auto;display:flex;align-items:center;gap:12px}
-.conexao{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--suave);
+.conexao{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--tinta-suave);
   display:flex;align-items:center;gap:7px}
-.conexao b{width:6px;height:6px;border-radius:50%;background:rgba(11,29,58,.28);display:block}
+.conexao b{width:6px;height:6px;border-radius:50%;background:rgba(30,20,23,.3);display:block}
 .conexao.ok b{background:var(--ok)}
 .conexao.falha b{background:var(--erro)}
-.menu-mob{display:none;background:none;border:none;cursor:pointer;color:var(--gold);
+.menu-mob{display:none;background:none;border:none;cursor:pointer;color:var(--vinho);
   font-size:10px;letter-spacing:.2em;text-transform:uppercase}
 
-.corpo{display:grid;grid-template-columns:268px 1fr;flex:1;min-height:0}
+.corpo{display:grid;grid-template-columns:272px 1fr;flex:1;min-height:0}
 
 /* ─── LISTA DE ALUNOS ─── */
-aside{border-right:1px solid var(--linha);padding:22px 0;background:var(--papel-fundo);
-  position:sticky;top:65px;height:calc(100vh - 65px);overflow-y:auto}
-.aside-tit{font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);
+aside{border-right:1px solid var(--linha);padding:24px 0;background:var(--areia);
+  position:sticky;top:68px;height:calc(100vh - 68px);overflow-y:auto}
+.aside-tit{font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:var(--vinho);
   padding:0 24px 12px}
-.busca{margin:0 20px 14px;position:relative}
+.busca{margin:0 20px 16px}
 .busca input{width:100%;background:#fff;border:1px solid var(--linha);
-  border-radius:2px;padding:9px 12px;font-size:12.5px;font-weight:300;letter-spacing:.02em}
-.busca input::placeholder{color:rgba(11,29,58,.38)}
-.busca input:focus{border-color:var(--gold-claro);box-shadow:0 0 0 3px rgba(196,164,90,.12)}
+  border-radius:3px;padding:10px 12px;font-size:13px;font-weight:400;letter-spacing:.02em}
+.busca input::placeholder{color:rgba(30,20,23,.5)}
+.busca input:focus{border-color:var(--vinho-claro);box-shadow:0 0 0 3px rgba(110,31,46,.1)}
 .lista-alunos{list-style:none}
 .lista-alunos li button{width:100%;text-align:left;background:none;border:none;cursor:pointer;
-  padding:10px 24px;font-size:13px;font-weight:300;letter-spacing:.02em;color:var(--tinta);
+  padding:10px 24px;font-size:13.5px;font-weight:400;letter-spacing:.02em;color:var(--tinta);
   border-left:2px solid transparent;transition:.18s;display:flex;align-items:center;gap:9px}
-.lista-alunos li button:hover{background:rgba(255,255,255,.75);color:var(--navy)}
-.lista-alunos li button.ativo{border-left-color:var(--gold);color:var(--gold);font-weight:400;
-  background:linear-gradient(90deg,rgba(196,164,90,.16),transparent)}
-.lista-alunos li button i{font-style:normal;font-size:9px;color:var(--suave);margin-left:auto}
-.aside-vazio{padding:18px 24px;font-size:11.5px;color:var(--suave);line-height:1.7}
+.lista-alunos li button:hover{background:rgba(255,255,255,.7);color:var(--vinho)}
+.lista-alunos li button.ativo{border-left-color:var(--vinho);color:var(--vinho);font-weight:500;
+  background:linear-gradient(90deg,var(--blush),rgba(247,236,234,0))}
+.lista-alunos li button i{font-style:normal;font-size:9px;color:var(--tinta-suave);margin-left:auto}
+.aside-vazio{padding:18px 24px;font-size:12px;color:var(--tinta);line-height:1.7}
 
 /* ─── PAINEL PRINCIPAL ─── */
-main{padding:30px 34px 90px;min-width:0}
+main{padding:32px 36px 90px;min-width:0}
 .cabecalho-aluno{margin-bottom:26px;padding-bottom:20px;border-bottom:1px solid var(--linha)}
-.cabecalho-aluno .rotulo{font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
-.cabecalho-aluno h1{font-family:var(--serif);font-size:38px;font-weight:400;color:var(--navy);
-  letter-spacing:.01em;line-height:1.1}
-.cabecalho-aluno .resumo{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px 26px;
-  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--suave)}
-.cabecalho-aluno .resumo b{color:var(--gold);font-weight:500}
+.cabecalho-aluno .rotulo{font-size:9px;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--vinho);margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.cabecalho-aluno .rotulo::after{content:'';flex:0 0 46px;border-top:1px solid var(--ouro)}
+.cabecalho-aluno h1{font-family:var(--serif);font-size:40px;font-weight:600;color:var(--tinta);
+  letter-spacing:.01em;line-height:1.08}
+.cabecalho-aluno .resumo{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px 26px;
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--tinta)}
+.cabecalho-aluno .resumo b{color:var(--vinho);font-weight:600}
 
 .barra{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:26px}
-.btn{background:#fff;border:1px solid rgba(168,132,47,.45);color:var(--gold);cursor:pointer;
-  padding:8px 16px;font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;border-radius:2px;transition:.2s}
-.btn:hover{background:rgba(196,164,90,.14)}
-.btn.cheio{background:var(--gold);color:#fff;border-color:var(--gold);font-weight:500}
-.btn.cheio:hover{background:var(--gold-claro);color:var(--navy)}
-.btn.discreto{background:#fff;border-color:var(--linha);color:var(--suave)}
-.btn.discreto:hover{border-color:var(--navy-claro);color:var(--navy);background:#fff}
-.barra select{background:#fff;border:1px solid var(--linha);color:var(--navy);
-  border-radius:2px;padding:8px 12px;font-size:11px;letter-spacing:.1em}
+.btn{background:#fff;border:1px solid var(--vinho-tenue);color:var(--vinho);cursor:pointer;
+  padding:9px 17px;font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;
+  border-radius:3px;transition:.2s}
+.btn:hover{background:var(--blush);border-color:var(--vinho-claro)}
+.btn.cheio{background:var(--vinho);color:#fff;border-color:var(--vinho);font-weight:500;
+  box-shadow:0 2px 10px rgba(110,31,46,.2)}
+.btn.cheio:hover{background:var(--vinho-fundo);border-color:var(--vinho-fundo)}
+.btn.discreto{background:#fff;border-color:var(--linha);color:var(--tinta-suave)}
+.btn.discreto:hover{border-color:var(--vinho-claro);color:var(--vinho);background:#fff}
+.barra select{background:#fff;border:1px solid var(--linha);color:var(--tinta);
+  border-radius:3px;padding:9px 12px;font-size:11px;letter-spacing:.1em}
 
 /* ─── SEMANAS ─── */
-.grupo-tit{display:flex;align-items:center;gap:16px;margin:34px 0 16px}
+.grupo-tit{display:flex;align-items:center;gap:16px;margin:36px 0 16px}
 .grupo-tit h2{font-family:var(--serif);font-size:15px;font-weight:500;letter-spacing:.24em;
-  text-transform:uppercase;color:var(--gold);white-space:nowrap}
-.grupo-tit hr{flex:1;border:none;border-top:1px solid rgba(196,164,90,.42)}
+  text-transform:uppercase;color:var(--vinho);white-space:nowrap}
+.grupo-tit hr{flex:1;border:none;border-top:1px solid var(--vinho-tenue)}
 
-.semana{border:1px solid var(--linha);border-radius:3px;margin-bottom:10px;
+.semana{border:1px solid var(--linha);border-radius:4px;margin-bottom:10px;
   background:#fff;overflow:hidden;transition:border-color .25s,box-shadow .25s}
-.semana:hover{box-shadow:0 2px 12px rgba(11,29,58,.05)}
-.semana.atual{border-color:rgba(168,132,47,.5);background:var(--papel-alt)}
-.semana.aberta{border-color:rgba(168,132,47,.38);box-shadow:0 3px 18px rgba(11,29,58,.06)}
-.semana-cab{width:100%;display:flex;align-items:center;gap:18px;padding:15px 20px;
+.semana:hover{box-shadow:0 2px 14px rgba(46,33,38,.06)}
+.semana.atual{border-color:rgba(110,31,46,.4);background:var(--blush)}
+.semana.aberta{border-color:rgba(110,31,46,.32);box-shadow:0 4px 22px rgba(46,33,38,.08)}
+.semana-cab{width:100%;display:flex;align-items:center;gap:18px;padding:16px 20px;
   background:none;border:none;cursor:pointer;text-align:left}
-.semana-cab:hover .sem-tit{color:var(--gold)}
-.sem-num{font-family:var(--serif);font-size:13px;letter-spacing:.16em;color:var(--gold);
-  min-width:74px;border-right:1px solid rgba(196,164,90,.45);padding-right:16px}
-.sem-tit{font-family:var(--serif);font-size:19px;font-weight:400;color:var(--navy);transition:.2s}
-.sem-etiqueta{font-size:8px;letter-spacing:.2em;text-transform:uppercase;padding:3px 9px;
-  border:1px solid var(--gold);color:var(--gold);border-radius:2px;background:#fff}
+.semana-cab:hover .sem-tit{color:var(--vinho)}
+.sem-num{font-family:var(--serif);font-size:13px;letter-spacing:.16em;color:var(--vinho);
+  min-width:78px;border-right:1px solid var(--vinho-tenue);padding-right:16px}
+.sem-tit{font-family:var(--serif);font-size:20px;font-weight:600;color:var(--tinta);transition:.2s}
+.sem-etiqueta{font-size:8px;letter-spacing:.2em;text-transform:uppercase;padding:4px 10px;
+  background:var(--vinho);color:#fff;border-radius:2px}
 .sem-meta{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:9.5px;
-  letter-spacing:.16em;text-transform:uppercase;color:var(--suave)}
-.sem-meta .preench b{color:var(--gold);font-weight:500}
+  letter-spacing:.16em;text-transform:uppercase;color:var(--tinta)}
 .sem-estado{font-size:9px;letter-spacing:.16em;min-width:66px;text-align:right}
-.sem-estado.salvando{color:var(--gold)}
+.sem-estado.salvando{color:var(--ouro)}
 .sem-estado.salvo{color:var(--ok)}
 .sem-estado.erro{color:var(--erro)}
-.chev{width:8px;height:8px;border-right:1px solid var(--gold);border-bottom:1px solid var(--gold);
+.chev{width:8px;height:8px;border-right:1.5px solid var(--vinho);border-bottom:1.5px solid var(--vinho);
   transform:rotate(45deg);transition:transform .3s;flex-shrink:0}
 .semana.aberta .chev{transform:rotate(-135deg)}
 .semana-corpo{display:none;padding:4px 20px 20px;border-top:1px solid var(--linha)}
 .semana.aberta .semana-corpo{display:block}
 
-.entrada{display:grid;grid-template-columns:44px 1fr;gap:16px;padding:16px 0;
-  border-bottom:1px dashed var(--linha)}
-.entrada:last-of-type{border-bottom:none}
-.entrada .romano{font-family:var(--serif);font-size:17px;color:var(--gold);opacity:.8;
-  padding-top:6px;letter-spacing:.08em}
+.entrada{padding:14px 0 4px}
+.campos-rotulo{font-size:8.5px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--vinho);margin-bottom:9px}
 .campos{display:grid;grid-template-columns:132px 1fr 148px;gap:10px}
 .campos .larga{grid-column:1/-1}
 .campos input,.campos select,.campos textarea{width:100%;background:#fff;
-  border:1px solid var(--linha);border-radius:2px;padding:9px 11px;color:var(--navy);
-  font-size:12.5px;font-weight:300;letter-spacing:.015em;transition:.18s}
+  border:1px solid var(--linha);border-radius:3px;padding:9px 11px;color:var(--tinta);
+  font-size:13px;font-weight:400;letter-spacing:.015em;transition:.18s}
 .campos textarea{resize:vertical;min-height:44px;line-height:1.6}
-.campos input::placeholder,.campos textarea::placeholder{color:rgba(11,29,58,.34)}
+.campos input::placeholder,.campos textarea::placeholder{color:rgba(30,20,23,.45)}
 .campos input:focus,.campos textarea:focus,.campos select:focus{
-  border-color:var(--gold-claro);box-shadow:0 0 0 3px rgba(196,164,90,.13)}
+  border-color:var(--vinho-claro);box-shadow:0 0 0 3px rgba(110,31,46,.1)}
 .campos input[type=date]{color-scheme:light}
-.semana.atual .campos input,.semana.atual .campos select,.semana.atual .campos textarea{background:#fff}
-.entrada[data-status="Concluída"] .romano{opacity:1;color:var(--ok)}
-.entrada[data-status="Cancelada"]{opacity:.5}
+.entrada[data-status="Cancelada"]{opacity:.55}
+
+.chip{font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;padding:4px 10px;
+  border-radius:2px;border:1px solid var(--linha);color:var(--tinta);background:#fff;white-space:nowrap}
+.chip[data-s="Em curso"]{border-color:var(--ouro);color:var(--ouro)}
+.chip[data-s="Concluída"]{border-color:var(--ok);color:#fff;background:var(--ok)}
+.chip[data-s="Remarcada"]{border-color:var(--vinho-claro);color:var(--vinho-claro)}
+.chip[data-s="Cancelada"]{color:var(--tinta-suave);text-decoration:line-through}
+.sem-info{display:flex;align-items:center;gap:12px;max-width:44vw;overflow:hidden}
+.sem-info .foco{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing:.01em;
+  text-transform:none;color:var(--tinta);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sem-info .vazia{font-size:9.5px;letter-spacing:.18em;color:var(--tinta-suave)}
 
 .acoes-semana{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;padding-top:16px;
-  border-top:1px solid rgba(196,164,90,.38)}
+  border-top:1px solid var(--vinho-tenue)}
 .acoes-semana .dir{margin-left:auto}
 
-.vazio-geral{text-align:center;padding:90px 20px;color:var(--suave)}
-.vazio-geral p{font-family:var(--serif);font-size:23px;font-style:italic;color:var(--gold);margin-bottom:12px}
-.vazio-geral small{font-size:12px;letter-spacing:.05em;line-height:1.8;display:block;max-width:420px;margin:0 auto}
+.vazio-geral{text-align:center;padding:90px 20px;color:var(--tinta-suave)}
+.vazio-geral p{font-family:var(--serif);font-size:24px;font-style:italic;color:var(--vinho);margin-bottom:12px}
+.vazio-geral small{font-size:12.5px;color:var(--tinta);letter-spacing:.05em;line-height:1.8;display:block;max-width:430px;margin:0 auto}
 
 #aviso{position:fixed;bottom:26px;left:50%;transform:translate(-50%,80px);z-index:60;
-  background:#fff;border:1px solid rgba(168,132,47,.5);border-radius:3px;color:var(--navy);
-  box-shadow:0 8px 30px rgba(11,29,58,.14);
+  background:var(--vinho);border:1px solid var(--vinho);border-radius:3px;color:#fff;
+  box-shadow:0 10px 34px rgba(46,33,38,.22);
   padding:13px 24px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
   transition:transform .35s,opacity .35s;opacity:0}
 #aviso.on{transform:translate(-50%,0);opacity:1}
-#aviso.falha{border-color:var(--erro);color:var(--erro)}
+#aviso.falha{background:var(--erro);border-color:var(--erro)}
 
 @media(max-width:900px){
   .corpo{grid-template-columns:1fr}
-  aside{position:fixed;inset:65px 0 0 0;height:auto;z-index:35;background:var(--papel);
+  aside{position:fixed;inset:68px 0 0 0;height:auto;z-index:35;background:var(--areia);
     display:none;border-right:none}
   aside.on{display:block}
   .menu-mob{display:block}
   .topo .titulo{display:none}
   main{padding:24px 18px 80px}
-  .cabecalho-aluno h1{font-size:29px}
+  .cabecalho-aluno h1{font-size:30px}
   .campos{grid-template-columns:1fr}
-  .sem-num{min-width:56px;padding-right:12px}
+  .sem-num{min-width:58px;padding-right:12px}
   .sem-tit{font-size:16px}
-  .sem-meta .preench{display:none}
+  .sem-info{max-width:38vw}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media print{
-  body{background:#fff}
+  body{background:#fff;background-image:none}
   aside,.barra,.topo .dir,.acoes-semana,#aviso{display:none!important}
-  .semana{box-shadow:none;break-inside:avoid}
+  .semana{box-shadow:none;break-inside:avoid;background:#fff}
   .semana-corpo{display:block!important}
   .campos input,.campos textarea,.campos select{border:none;box-shadow:none}
 }
@@ -211,7 +224,7 @@ main{padding:30px 34px 90px;min-width:0}
     <main id="painel">
       <div class="vazio-geral" id="vazioGeral">
         <p>Selecione um aluno</p>
-        <small>Cada aluno tem um cronograma próprio, com cinco entradas por semana. As semanas anteriores ficam recolhidas ao final da página.</small>
+        <small>Cada aluno tem um cronograma próprio, com um registro por semana, sempre datado na segunda-feira. As semanas anteriores ficam recolhidas ao final da página.</small>
       </div>
       <div id="conteudo" hidden>
         <div class="cabecalho-aluno">
@@ -249,8 +262,7 @@ main{padding:30px 34px 90px;min-width:0}
 const API = 'https://script.google.com/macros/s/AKfycbzGbMTW1FuhGf4ZJM85lEy6QrbctiRS6hYb36_nwidksb6h5Fqxj5CWma4zefbBERfPaw/exec';
 
 const STATUS = ['Planejada','Em curso','Concluída','Remarcada','Cancelada'];
-const ROMANOS = ['I','II','III','IV','V'];
-const ENTRADAS_POR_SEMANA = 5;
+const ENTRADAS_POR_SEMANA = 1;   // um registro por semana, na segunda-feira
 const SEMANAS_ANTERIORES_INICIAL = 6;
 
 /* ═══════════════ ESTADO ═══════════════ */
@@ -292,10 +304,17 @@ function iso(d){
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 function rotuloSemana(seg){
-  const sex = somarDias(seg, 4);
-  if (seg.getMonth() === sex.getMonth())
-    return seg.getDate() + ' a ' + sex.getDate() + ' de ' + MESES[seg.getMonth()];
-  return seg.getDate() + ' de ' + MESES[seg.getMonth()] + ' a ' + sex.getDate() + ' de ' + MESES[sex.getMonth()];
+  return 'Segunda, ' + seg.getDate() + ' de ' + MESES[seg.getMonth()];
+}
+
+function resumoSemana(chave){
+  const en = (estado.dados[chave] || [])[0] || {};
+  const texto = String(en.foco || '').trim() || String(en.atividade || '').trim();
+  if (!texto) return '<span class="vazia">Sem registro</span>';
+  const curto = texto.length > 54 ? texto.slice(0, 54) + '…' : texto;
+  return '<span class="foco">' + escapar(curto) + '</span>' +
+         '<span class="chip" data-s="' + escapar(en.status || 'Planejada') + '">' +
+         escapar(en.status || 'Planejada') + '</span>';
 }
 
 /* ═══════════════ COMUNICAÇÃO COM A PLANILHA ═══════════════ */
@@ -507,16 +526,14 @@ function renderizarSemanas(){
 
 function atualizarResumoAluno(){
   const chaves = Object.keys(estado.dados);
-  let semanas = 0, entradas = 0, concluidas = 0;
+  let semanas = 0, concluidas = 0;
   chaves.forEach(function(k){
     const c = contarSemana(k);
     if (c.preenchidas) semanas++;
-    entradas += c.preenchidas;
     concluidas += c.concluidas;
   });
   document.getElementById('resumoAluno').innerHTML =
-    '<span><b>' + semanas + '</b> semanas planejadas</span>' +
-    '<span><b>' + entradas + '</b> entradas</span>' +
+    '<span><b>' + semanas + '</b> semanas registradas</span>' +
     '<span><b>' + concluidas + '</b> concluídas</span>';
 }
 
@@ -524,7 +541,6 @@ function criarSemana(seg, ehAtual){
   const chave = chaveSemana(seg);
   const numero = chave.split('-S')[1];
   entradasDa(chave, seg);
-  const contagem = contarSemana(chave);
 
   const art = document.createElement('article');
   art.className = 'semana' + (ehAtual ? ' atual' : '');
@@ -538,7 +554,7 @@ function criarSemana(seg, ehAtual){
     '<span class="sem-tit">' + rotuloSemana(seg) + '</span>' +
     (ehAtual ? '<span class="sem-etiqueta">Semana atual</span>' : '') +
     '<span class="sem-meta">' +
-      '<span class="preench"><b>' + contagem.preenchidas + '</b>/' + ENTRADAS_POR_SEMANA + ' preenchidas</span>' +
+      '<span class="sem-info">' + resumoSemana(chave) + '</span>' +
       '<span class="sem-estado"></span>' +
       '<span class="chev"></span>' +
     '</span>';
@@ -580,14 +596,14 @@ function montarCorpo(art){
     div.className = 'entrada';
     div.dataset.status = linha.status;
     div.innerHTML =
-      '<div class="romano">' + ROMANOS[i] + '</div>' +
+      '<div class="campos-rotulo">Programação da semana</div>' +
       '<div class="campos">' +
         '<input type="date" data-c="data" value="' + (linha.data || '') + '">' +
         '<input type="text" data-c="foco" placeholder="Foco da aula ou estrutura" value="' + escapar(linha.foco) + '">' +
         '<select data-c="status">' + STATUS.map(function(s){
           return '<option' + (s === linha.status ? ' selected' : '') + '>' + s + '</option>';
         }).join('') + '</select>' +
-        '<textarea class="larga" data-c="atividade" placeholder="Atividade, material e tarefa">' + escapar(linha.atividade) + '</textarea>' +
+        '<textarea class="larga" data-c="atividade" placeholder="Conteúdo, material e tarefa da semana">' + escapar(linha.atividade) + '</textarea>' +
         '<input class="larga" type="text" data-c="obs" placeholder="Observações" value="' + escapar(linha.obs) + '">' +
       '</div>';
     div.querySelectorAll('[data-c]').forEach(function(campo){
@@ -604,7 +620,7 @@ function montarCorpo(art){
   const acoes = document.createElement('div');
   acoes.className = 'acoes-semana';
   acoes.innerHTML =
-    '<button class="btn discreto" data-a="copiar">Copiar semana anterior</button>' +
+    '<button class="btn discreto" data-a="copiar">Repetir semana anterior</button>' +
     '<button class="btn discreto" data-a="limpar">Limpar semana</button>' +
     '<button class="btn cheio dir" data-a="salvar">Salvar semana</button>';
   acoes.querySelector('[data-a="copiar"]').onclick = function(){ copiarAnterior(art); };
@@ -619,9 +635,8 @@ function escapar(t){
 }
 
 function atualizarContagem(art){
-  const c = contarSemana(art.dataset.sem);
-  const el = art.querySelector('.preench');
-  if (el) el.innerHTML = '<b>' + c.preenchidas + '</b>/' + ENTRADAS_POR_SEMANA + ' preenchidas';
+  const el = art.querySelector('.sem-info');
+  if (el) el.innerHTML = resumoSemana(art.dataset.sem);
   atualizarResumoAluno();
 }
 
@@ -646,7 +661,7 @@ function copiarAnterior(art){
 }
 
 function limparSemana(art){
-  if (!confirm('Apagar as cinco entradas desta semana?')) return;
+  if (!confirm('Apagar o registro desta semana?')) return;
   const seg = new Date(art.dataset.seg + 'T00:00:00');
   estado.dados[art.dataset.sem] = null;
   entradasDa(art.dataset.sem, seg);
