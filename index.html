@@ -14,7 +14,13 @@
   --blush:#F7ECEA; --marfim:#FCFAF7; --areia:#F3EEE6; --pergaminho:#EFE8DC;
   --ouro:#A87F3E; --ouro-claro:#C9A467;
   --tinta:#1E1417; --tinta-suave:rgba(30,20,23,.74); --linha:rgba(30,20,23,.17);
-  --ok:#4F7A5E; --erro:#A8452F;
+  --ok:#3F7A55; --erro:#A8452F;
+  /* cores funcionais por status */
+  --st-plan:#3D6B8E;  --st-plan-bg:#E9F1F7;
+  --st-curso:#B07C1E; --st-curso-bg:#FBF2DC;
+  --st-feito:#3F7A55; --st-feito-bg:#E5F1E9;
+  --st-remar:#7A4C8C; --st-remar-bg:#F2E9F6;
+  --st-canc:#8A7C80;  --st-canc-bg:#EFEAEC;
   --serif:'Cormorant Garamond',Georgia,serif;
   --sans:'Raleway',system-ui,sans-serif;
 }
@@ -91,6 +97,16 @@ aside{border-right:1px solid var(--linha);padding:24px 0;background:var(--areia)
 .lista-alunos li button.ativo{color:var(--vinho);font-weight:600;background:var(--blush);
   box-shadow:inset 3px 0 0 var(--vinho)}
 .lista-alunos li button i{font-style:normal;font-size:9px;color:var(--tinta-suave);margin-left:auto}
+.inicial{flex:0 0 28px;height:28px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--serif);font-size:12.5px;font-weight:600;letter-spacing:.02em;
+  transition:transform .25s}
+.lista-alunos li button:hover .inicial{transform:scale(1.08)}
+.inicial[data-c="0"]{background:var(--st-plan-bg);color:var(--st-plan)}
+.inicial[data-c="1"]{background:var(--st-feito-bg);color:var(--st-feito)}
+.inicial[data-c="2"]{background:var(--st-curso-bg);color:var(--st-curso)}
+.inicial[data-c="3"]{background:var(--st-remar-bg);color:var(--st-remar)}
+.inicial[data-c="4"]{background:var(--blush);color:var(--vinho)}
+.inicial[data-c="5"]{background:#E7F0EF;color:#357070}
 .aside-vazio{padding:18px 24px;font-size:12px;color:var(--tinta);line-height:1.7}
 
 /* ─── PAINEL PRINCIPAL ─── */
@@ -101,9 +117,19 @@ main{padding:32px 36px 90px;min-width:0}
 .cabecalho-aluno .rotulo::after{content:'';flex:0 0 46px;border-top:1px solid var(--ouro)}
 .cabecalho-aluno h1{font-family:var(--serif);font-size:40px;font-weight:600;color:var(--tinta);
   letter-spacing:.01em;line-height:1.08}
-.cabecalho-aluno .resumo{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px 26px;
-  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--tinta)}
-.cabecalho-aluno .resumo b{color:var(--vinho);font-weight:600}
+.cabecalho-aluno .resumo{margin-top:16px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.pilula{display:inline-flex;align-items:center;gap:7px;padding:6px 14px;border-radius:999px;
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;
+  border:1px solid transparent}
+.pilula b{font-family:var(--serif);font-size:15px;font-weight:600;letter-spacing:0}
+.pilula.reg{background:var(--blush);color:var(--vinho);border-color:rgba(110,31,46,.2)}
+.pilula.fim{background:var(--st-feito-bg);color:var(--st-feito);border-color:rgba(63,122,85,.24)}
+.pilula.abrir{background:var(--st-plan-bg);color:var(--st-plan);border-color:rgba(61,107,142,.22)}
+.medidor{flex:1 1 160px;min-width:120px;height:6px;border-radius:999px;
+  background:rgba(30,20,23,.09);overflow:hidden}
+.medidor span{display:block;height:100%;border-radius:999px;width:0;
+  background:linear-gradient(90deg,var(--vinho),var(--vinho-claro) 55%,var(--ouro));
+  transition:width .6s cubic-bezier(.22,.9,.3,1)}
 
 .barra{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:26px}
 .btn{background:#fff;border:1px solid var(--vinho-tenue);color:var(--vinho);cursor:pointer;
@@ -129,30 +155,32 @@ main{padding:32px 36px 90px;min-width:0}
 /* fluxo contínuo: um trilho vertical costura as semanas */
 #semanasFuturas,#semanasAnteriores{position:relative}
 #semanasFuturas::before,#semanasAnteriores::before{content:'';position:absolute;
-  left:31px;top:18px;bottom:18px;width:1px;
-  background:linear-gradient(180deg,transparent,var(--vinho-tenue) 7%,var(--vinho-tenue) 93%,transparent)}
+  left:30px;top:20px;bottom:20px;width:2px;border-radius:2px;
+  background:linear-gradient(180deg,transparent,var(--st-plan) 6%,var(--vinho-claro) 46%,
+    var(--ouro) 78%,transparent);opacity:.3}
 #semanasAnteriores{opacity:.88}
 
 .semana{position:relative;transition:background .35s;
   animation:emergir .5s cubic-bezier(.22,.9,.3,1) backwards}
 @keyframes emergir{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.semana::before{content:'';position:absolute;left:26px;top:27px;width:11px;height:11px;
-  border-radius:50%;background:var(--marfim);border:1.5px solid var(--vinho-claro);
-  z-index:2;transition:transform .3s,background .3s,border-color .3s,box-shadow .4s}
-.semana:hover::before{border-color:var(--vinho);transform:scale(1.2)}
-.semana.atual::before{background:var(--vinho);border-color:var(--vinho);
-  box-shadow:0 0 0 5px rgba(110,31,46,.13)}
-.semana.aberta::before{background:var(--vinho);border-color:var(--vinho)}
-.semana.gravado::before{animation:pulsoGravado 1.2s ease}
-@keyframes pulsoGravado{0%{box-shadow:0 0 0 0 rgba(79,122,94,.5)}
-  100%{box-shadow:0 0 0 18px rgba(79,122,94,0)}}
+.semana.gravado{animation:pulsoGravado 1.2s ease}
+@keyframes pulsoGravado{0%{background-color:rgba(63,122,85,.18)}
+  100%{background-color:transparent}}
+
+/* a data ganha a cor do status da semana */
+.semana[data-st="Planejada"] .marco b{color:var(--st-plan)}
+.semana[data-st="Em curso"] .marco b{color:var(--st-curso)}
+.semana[data-st="Concluída"] .marco b{color:var(--st-feito)}
+.semana[data-st="Remarcada"] .marco b{color:var(--st-remar)}
+.semana[data-st="Cancelada"] .marco b{color:var(--st-canc)}
+.semana[data-st] .marco i{color:currentColor;opacity:.72}
 .semana::after{content:'';position:absolute;left:58px;right:8px;bottom:0;height:1px;
   background:var(--linha);opacity:.65;transition:opacity .3s}
 .semana:last-child::after{display:none}
 .semana.aberta{border-radius:16px;
   background:linear-gradient(100deg,rgba(247,236,234,.72),rgba(247,236,234,.12) 72%,transparent)}
 .semana.aberta::after{opacity:0}
-.semana.atual .marco b{color:var(--vinho)}
+
 
 .semana-cab{width:100%;display:grid;grid-template-columns:74px 1fr auto;align-items:center;
   gap:18px;padding:18px 14px 18px 0;background:none;border:none;cursor:pointer;text-align:left}
@@ -207,15 +235,18 @@ main{padding:32px 36px 90px;min-width:0}
 .campos input[type=date]{color-scheme:light}
 .entrada[data-status="Cancelada"]{opacity:.55}
 
-.chip{font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;padding:4px 10px;
-  border-radius:999px;border:1px solid var(--linha);color:var(--tinta);background:#fff;white-space:nowrap}
-.chip[data-s="Em curso"]{border-color:var(--ouro);color:var(--ouro);
-  animation:respirar 2.6s ease-in-out infinite}
-@keyframes respirar{0%,100%{box-shadow:0 0 0 0 rgba(168,127,62,.26)}
-  50%{box-shadow:0 0 0 5px rgba(168,127,62,0)}}
-.chip[data-s="Concluída"]{border-color:var(--ok);color:#fff;background:var(--ok)}
-.chip[data-s="Remarcada"]{border-color:var(--vinho-claro);color:var(--vinho-claro)}
-.chip[data-s="Cancelada"]{color:var(--tinta-suave);text-decoration:line-through}
+.chip{font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;padding:5px 11px;
+  border-radius:999px;border:1px solid transparent;white-space:nowrap;font-weight:600;
+  color:var(--st-plan);background:var(--st-plan-bg);border-color:rgba(61,107,142,.24)}
+.chip[data-s="Em curso"]{color:var(--st-curso);background:var(--st-curso-bg);
+  border-color:rgba(176,124,30,.3);animation:respirar 2.8s ease-in-out infinite}
+@keyframes respirar{0%,100%{box-shadow:0 0 0 0 rgba(176,124,30,.3)}
+  50%{box-shadow:0 0 0 6px rgba(176,124,30,0)}}
+.chip[data-s="Concluída"]{color:#fff;background:var(--st-feito);border-color:var(--st-feito)}
+.chip[data-s="Remarcada"]{color:var(--st-remar);background:var(--st-remar-bg);
+  border-color:rgba(122,76,140,.28)}
+.chip[data-s="Cancelada"]{color:var(--st-canc);background:var(--st-canc-bg);
+  border-color:rgba(138,124,128,.3);text-decoration:line-through}
 
 .acoes-semana{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;padding-top:18px;
   border-top:1px solid var(--vinho-tenue)}
@@ -382,6 +413,7 @@ function resumoSemana(chave, art){
   const en = (estado.dados[chave] || [])[0] || {};
   const texto = String(en.foco || '').trim() || String(en.atividade || '').trim();
   const status = en.status || 'Planejada';
+  if (art) { if (texto) art.dataset.st = status; else delete art.dataset.st; }
 
   const titulo = texto
     ? '<span class="sem-tit">' + escapar(texto.length > 80 ? texto.slice(0, 80) + '…' : texto) + '</span>'
@@ -519,6 +551,19 @@ function mostrarFalha(mensagem){
     '<small style="margin-top:18px"><a href="' + API + '?action=ping" target="_blank" rel="noopener">Testar a conexão em outra aba</a></small>';
 }
 
+function iniciais(nome){
+  const partes = String(nome).trim().split(/\s+/).filter(function(p){ return p.length > 2; });
+  const primeira = partes[0] || nome;
+  const ultima = partes.length > 1 ? partes[partes.length - 1] : '';
+  return (primeira.charAt(0) + ultima.charAt(0)).toUpperCase();
+}
+
+function corDoNome(nome){
+  let soma = 0;
+  for (let i = 0; i < nome.length; i++) soma += nome.charCodeAt(i);
+  return soma % 6;
+}
+
 function renderizarLista(){
   const termo = document.getElementById('busca').value.trim().toLowerCase();
   const ul = document.getElementById('listaAlunos');
@@ -529,7 +574,12 @@ function renderizarLista(){
       const li = document.createElement('li');
       li.style.animationDelay = (indice * 28) + 'ms';
       const b = document.createElement('button');
-      b.textContent = nome;
+      const ini = document.createElement('span');
+      ini.className = 'inicial';
+      ini.dataset.c = String(corDoNome(nome));
+      ini.textContent = iniciais(nome);
+      b.appendChild(ini);
+      b.appendChild(document.createTextNode(nome));
       if (nome === estado.aluno) b.className = 'ativo';
       b.onclick = function(){
         estado.aluno = nome;
@@ -645,9 +695,22 @@ function atualizarResumoAluno(){
     if (c.preenchidas) semanas++;
     concluidas += c.concluidas;
   });
+  // quantas das semanas visíveis à frente já têm registro
+  const segAtual = segundaDe(new Date());
+  let previstas = 0;
+  for (let i = 0; i < estado.horizonte; i++){
+    if (contarSemana(chaveSemana(somarDias(segAtual, i * 7))).preenchidas) previstas++;
+  }
+  const proporcao = Math.round((previstas / estado.horizonte) * 100);
+
   document.getElementById('resumoAluno').innerHTML =
-    '<span><b>' + semanas + '</b> ' + (semanas === 1 ? 'semana registrada' : 'semanas registradas') + '</span>' +
-    '<span><b>' + concluidas + '</b> ' + (concluidas === 1 ? 'concluída' : 'concluídas') + '</span>';
+    '<span class="pilula reg"><b>' + semanas + '</b>' +
+      (semanas === 1 ? 'semana registrada' : 'semanas registradas') + '</span>' +
+    '<span class="pilula fim"><b>' + concluidas + '</b>' +
+      (concluidas === 1 ? 'concluída' : 'concluídas') + '</span>' +
+    '<span class="pilula abrir"><b>' + previstas + '/' + estado.horizonte + '</b>à frente</span>' +
+    '<span class="medidor" title="' + proporcao + '% do horizonte planejado">' +
+      '<span style="width:' + proporcao + '%"></span></span>';
 }
 
 function criarSemana(seg, ehAtual){
