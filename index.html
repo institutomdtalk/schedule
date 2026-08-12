@@ -818,26 +818,25 @@ const AUTOSAVE_MS = 1200;
 const REQUEST_TIMEOUT_MS = 25000;
 const LS_PREFIX = 'mdtalk-cronograma-v2:';
 
-// O aplicativo deve rodar pela URL publicada do Apps Script.
-// Se este HTML for aberto como arquivo/preview, encaminha automaticamente.
+// Roda em dois ambientes: dentro do Apps Script (google.script.run) ou
+// como página estática (GitHub Pages), falando com o Web App publicado.
 const IS_APPS_SCRIPT_HOST = !!(window.google && google.script && google.script.run);
-if (!IS_APPS_SCRIPT_HOST) {
-  setTimeout(() => {
-    try {
-      if (window.top) window.top.location.href = DEPLOYMENT_URL;
-      else window.location.href = DEPLOYMENT_URL;
-    } catch (_) {
-      window.location.href = DEPLOYMENT_URL;
-    }
-  }, 50);
-}
+
+// localStorage pode estar bloqueado (cookies de terceiros, modo restrito).
+// Todo acesso passa por aqui para que um bloqueio não derrube a aplicação.
+const store = {
+  get(key){ try{ return localStorage.getItem(key); }catch(_){ return null; } },
+  set(key,value){ try{ localStorage.setItem(key,value); }catch(_){} },
+  remove(key){ try{ localStorage.removeItem(key); }catch(_){} },
+  keys(){ try{ return Object.keys(localStorage); }catch(_){ return []; } }
+};
 
 const state = {
   students: [],
   student: null,
   dataByStudent: new Map(),
   openWeeks: new Set(),
-  horizon: Number(localStorage.getItem(LS_PREFIX + 'horizon')) || 10,
+  horizon: 10,   // ajustado logo abaixo, se houver preferência guardada
   past: PAST_INITIAL,
   loadToken: 0,
   timers: new Map(),
@@ -847,6 +846,8 @@ const state = {
   saveQueues: new Map(),
   recoveredDrafts: 0
 };
+
+state.horizon = Number(store.get(LS_PREFIX + 'horizon')) || 10;
 
 const $ = (id) => document.getElementById(id);
 const MONTHS = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -925,20 +926,56 @@ function setNetwork(kind, text){
 }
 
 function serverCall(method, payload){
-  return new Promise((resolve,reject) => {
-    if (!(window.google && google.script && google.script.run)){
-      // Se o arquivo for aberto diretamente (download/preview), não tenta executar
-      // a aplicação fora do ambiente do Apps Script. Encaminha para o Web App.
-      try {
-        if (window.top) window.top.location.href = DEPLOYMENT_URL;
-        else window.location.href = DEPLOYMENT_URL;
-      } catch (_) {
-        window.location.href = DEPLOYMENT_URL;
-      }
-      reject(new Error('Redirecionando para o site publicado…'));
-      return;
-    }
+  if (IS_APPS_SCRIPT_HOST) return callAppsScript(method, payload);
+  return method === 'apiGet' ? callJsonp(payload || {}) : callPost(payload || {});
+}
 
+/* Página estática: leitura por JSONP (imune a CORS) */
+function callJsonp(params){
+  return new Promise((resolve,reject) => {
+    const cb = 'mdt_' + Math.random().toString(36).slice(2);
+    const query = Object.keys(params)
+      .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+      .concat('callback=' + cb)
+      .join('&');
+    const tag = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); reject(new Error('Tempo esgotado ao acessar a planilha.')); }, REQUEST_TIMEOUT_MS);
+    function cleanup(){ clearTimeout(timer); delete window[cb]; tag.remove(); }
+    window[cb] = (response) => {
+      cleanup();
+      if (response && response.ok) resolve(response);
+      else reject(new Error((response && response.erro) || 'Resposta inválida do Apps Script.'));
+    };
+    tag.onerror = () => { cleanup(); reject(new Error('Não foi possível alcançar o Apps Script.')); };
+    tag.src = DEPLOYMENT_URL + '?' + query;
+    document.body.appendChild(tag);
+  });
+}
+
+/* Página estática: gravação por POST simples; se o navegador barrar, cai no JSONP */
+function callPost(body){
+  const porJsonp = () => callJsonp({action:body.action, dados:JSON.stringify(body)});
+  if (typeof fetch !== 'function') return porJsonp();
+  try{
+    return fetch(DEPLOYMENT_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(body)
+    })
+    .then(r => r.json())
+    .then(response => {
+      if (response && response.ok) return response;
+      throw new Error((response && response.erro) || 'Falha ao gravar.');
+    })
+    .catch(porJsonp);
+  }catch(_){
+    return porJsonp();
+  }
+}
+
+/* Dentro do Apps Script: chamada direta ao servidor */
+function callAppsScript(method, payload){
+  return new Promise((resolve,reject) => {
     let done = false;
     const timer = setTimeout(() => {
       if (done) return;
@@ -983,21 +1020,20 @@ function draftStorageKey(student, week){
 }
 function saveDraftLocal(student, week, entries){
   try{
-    localStorage.setItem(draftStorageKey(student,week), JSON.stringify({savedAt:Date.now(), entries:cloneEntries(entries)}));
+    store.set(draftStorageKey(student,week), JSON.stringify({savedAt:Date.now(), entries:cloneEntries(entries)}));
   }catch(_){}
 }
 function removeDraftLocal(student, week){
-  try{ localStorage.removeItem(draftStorageKey(student,week)); }catch(_){}
+  store.remove(draftStorageKey(student,week));
 }
 function applyLocalDrafts(student, data){
   let recovered = 0;
   const prefix = LS_PREFIX + 'draft:' + encodeURIComponent(student) + ':';
   try{
-    for (let i=0; i<localStorage.length; i++){
-      const key = localStorage.key(i);
+    for (const key of store.keys()){
       if (!key || !key.startsWith(prefix)) continue;
       const week = key.slice(prefix.length);
-      const draft = JSON.parse(localStorage.getItem(key));
+      const draft = JSON.parse(store.get(key));
       if (Array.isArray(draft?.entries)){
         data[week] = draft.entries;
         state.dirty.add(recordKey(student,week));
@@ -1008,11 +1044,11 @@ function applyLocalDrafts(student, data){
   return recovered;
 }
 function cacheStudents(students){
-  try{ localStorage.setItem(LS_PREFIX+'students', JSON.stringify({at:Date.now(),students})); }catch(_){}
+  store.set(LS_PREFIX+'students', JSON.stringify({at:Date.now(),students}));
 }
 function readStudentCache(){
   try{
-    const x = JSON.parse(localStorage.getItem(LS_PREFIX+'students'));
+    const x = JSON.parse(store.get(LS_PREFIX+'students'));
     return Array.isArray(x?.students) ? x.students : [];
   }catch(_){ return []; }
 }
@@ -1089,7 +1125,7 @@ async function loadStudents({silent=false}={}){
     cacheStudents(state.students);
     renderStudents();
     setNetwork('ok','Planilha conectada');
-    const savedStudent = localStorage.getItem(LS_PREFIX+'student');
+    const savedStudent = store.get(LS_PREFIX+'student');
     if (!state.student && savedStudent && state.students.includes(savedStudent)){
       selectStudent(savedStudent);
     }
@@ -1111,7 +1147,7 @@ async function selectStudent(student){
   state.openWeeks = new Set();
   state.past = PAST_INITIAL;
   state.recoveredDrafts = 0;
-  localStorage.setItem(LS_PREFIX+'student', student);
+  store.set(LS_PREFIX+'student', student);
   renderStudents();
   closeSidebar();
 
@@ -1484,7 +1520,7 @@ function bindEvents(){
   $('horizon').value = String(state.horizon);
   $('horizon').addEventListener('change',function(){
     state.horizon=Number(this.value);
-    localStorage.setItem(LS_PREFIX+'horizon',String(state.horizon));
+    store.set(LS_PREFIX+'horizon',String(state.horizon));
     renderWeeks();
   });
   $('todayBtn').addEventListener('click',scrollToCurrentWeek);
