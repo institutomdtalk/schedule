@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cronogramas Semanais · Instituto MD Talk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Raleway:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B1D3A; --navy-deep:#050D1A; --navy-mid:#0F2645; --navy-light:#163158;
+  --gold:#C4A45A; --gold-light:#D4BA7A; --gold-pale:#E8D9B0;
+  --cream:rgba(255,255,255,.88); --muted:rgba(255,255,255,.42);
+  --ok:#7C9E78; --alerta:#C08159; --erro:#C2705E;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'Raleway',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--navy-deep); color:var(--cream); font-family:var(--sans);
+  font-weight:300; -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(circle at 20% -10%,rgba(196,164,90,.10),transparent 55%),
+                   radial-gradient(rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:auto,26px 26px;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+::selection{background:rgba(196,164,90,.3)}
+
+/* ─── TELA DE PIN ─── */
+#pin{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;background:var(--navy-deep);transition:opacity .6s}
+#pin.saindo{opacity:0;pointer-events:none}
+.pin-marca{font-family:var(--serif);font-size:13px;letter-spacing:.55em;
+  color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.pin-sub{font-size:9.5px;letter-spacing:.35em;color:var(--muted);text-transform:uppercase;margin-bottom:38px}
+.pin-pontos{display:flex;gap:14px;margin-bottom:34px}
+.pin-pontos i{width:9px;height:9px;border-radius:50%;border:1px solid var(--gold);transition:.25s}
+.pin-pontos i.on{background:var(--gold);transform:scale(1.15)}
+.pin-teclado{display:grid;grid-template-columns:repeat(3,64px);gap:16px}
+.pin-teclado button{width:64px;height:64px;border-radius:50%;background:transparent;
+  border:1px solid rgba(255,255,255,.14);color:var(--cream);font-size:19px;font-weight:300;
+  cursor:pointer;transition:.2s}
+.pin-teclado button:hover{border-color:var(--gold);color:var(--gold)}
+.pin-teclado button.vazio{border:none;cursor:default}
+.pin-erro{margin-top:26px;font-size:10px;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--erro);opacity:0;transition:.3s}
+.pin-erro.on{opacity:1}
+.tremer{animation:tremer .42s}
+@keyframes tremer{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}
+  40%{transform:translateX(9px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* ─── ESTRUTURA ─── */
+#app{display:none;min-height:100vh;flex-direction:column}
+#app.on{display:flex;animation:surgir .7s ease}
+@keyframes surgir{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+header.topo{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:22px;
+  padding:15px 26px;background:rgba(5,13,26,.94);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(196,164,90,.2)}
+.topo .marca{font-family:var(--serif);font-size:12px;letter-spacing:.4em;
+  color:var(--gold);text-transform:uppercase;white-space:nowrap}
+.topo .marca span{display:block;font-size:8.5px;letter-spacing:.28em;color:var(--muted);margin-top:3px}
+.topo .titulo{font-family:var(--serif);font-size:20px;font-weight:300;letter-spacing:.02em;
+  border-left:1px solid rgba(196,164,90,.28);padding-left:22px}
+.topo .titulo em{font-style:italic;color:var(--gold)}
+.topo .dir{margin-left:auto;display:flex;align-items:center;gap:12px}
+.conexao{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+  display:flex;align-items:center;gap:7px}
+.conexao b{width:6px;height:6px;border-radius:50%;background:var(--muted);display:block}
+.conexao.ok b{background:var(--ok)}
+.conexao.falha b{background:var(--erro)}
+.menu-mob{display:none;background:none;border:none;cursor:pointer;color:var(--gold);
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase}
+
+.corpo{display:grid;grid-template-columns:268px 1fr;flex:1;min-height:0}
+
+/* ─── LISTA DE ALUNOS ─── */
+aside{border-right:1px solid rgba(255,255,255,.07);padding:22px 0;
+  position:sticky;top:65px;height:calc(100vh - 65px);overflow-y:auto}
+.aside-tit{font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);
+  padding:0 24px 12px}
+.busca{margin:0 20px 14px;position:relative}
+.busca input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  border-radius:2px;padding:9px 12px;font-size:12.5px;font-weight:300;letter-spacing:.02em}
+.busca input::placeholder{color:var(--muted)}
+.busca input:focus{border-color:rgba(196,164,90,.5);background:rgba(255,255,255,.06)}
+.lista-alunos{list-style:none}
+.lista-alunos li button{width:100%;text-align:left;background:none;border:none;cursor:pointer;
+  padding:10px 24px;font-size:13px;font-weight:300;letter-spacing:.02em;color:var(--cream);
+  border-left:2px solid transparent;transition:.18s;display:flex;align-items:center;gap:9px}
+.lista-alunos li button:hover{background:rgba(255,255,255,.04);color:var(--gold-light)}
+.lista-alunos li button.ativo{border-left-color:var(--gold);color:var(--gold);
+  background:linear-gradient(90deg,rgba(196,164,90,.12),transparent)}
+.lista-alunos li button i{font-style:normal;font-size:9px;color:var(--muted);margin-left:auto}
+.aside-vazio{padding:18px 24px;font-size:11.5px;color:var(--muted);line-height:1.7}
+
+/* ─── PAINEL PRINCIPAL ─── */
+main{padding:30px 34px 90px;min-width:0}
+.cabecalho-aluno{margin-bottom:26px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.cabecalho-aluno .rotulo{font-size:9px;letter-spacing:.32em;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
+.cabecalho-aluno h1{font-family:var(--serif);font-size:38px;font-weight:300;letter-spacing:.01em;line-height:1.1}
+.cabecalho-aluno .resumo{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px 26px;
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.cabecalho-aluno .resumo b{color:var(--gold-light);font-weight:400}
+
+.barra{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:26px}
+.btn{background:none;border:1px solid rgba(196,164,90,.42);color:var(--gold);cursor:pointer;
+  padding:8px 16px;font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;border-radius:2px;transition:.2s}
+.btn:hover{background:rgba(196,164,90,.14)}
+.btn.cheio{background:var(--gold);color:var(--navy-deep);border-color:var(--gold);font-weight:500}
+.btn.cheio:hover{background:var(--gold-light)}
+.btn.discreto{border-color:rgba(255,255,255,.14);color:var(--muted)}
+.btn.discreto:hover{border-color:rgba(255,255,255,.3);color:var(--cream);background:rgba(255,255,255,.04)}
+.barra select{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);
+  border-radius:2px;padding:8px 12px;font-size:11px;letter-spacing:.1em}
+.barra select option{background:var(--navy);color:var(--cream)}
+
+/* ─── SEMANAS ─── */
+.grupo-tit{display:flex;align-items:center;gap:16px;margin:34px 0 16px}
+.grupo-tit h2{font-family:var(--serif);font-size:15px;font-weight:400;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--gold);white-space:nowrap}
+.grupo-tit hr{flex:1;border:none;border-top:1px solid rgba(196,164,90,.2)}
+
+.semana{border:1px solid rgba(255,255,255,.09);border-radius:3px;margin-bottom:10px;
+  background:rgba(255,255,255,.015);overflow:hidden;transition:border-color .25s}
+.semana.atual{border-color:rgba(196,164,90,.45);background:rgba(196,164,90,.045)}
+.semana.aberta{border-color:rgba(196,164,90,.32)}
+.semana-cab{width:100%;display:flex;align-items:center;gap:18px;padding:15px 20px;
+  background:none;border:none;cursor:pointer;text-align:left}
+.semana-cab:hover .sem-tit{color:var(--gold-light)}
+.sem-num{font-family:var(--serif);font-size:13px;letter-spacing:.16em;color:var(--gold);
+  min-width:74px;border-right:1px solid rgba(196,164,90,.25);padding-right:16px}
+.sem-tit{font-family:var(--serif);font-size:19px;font-weight:300;transition:.2s}
+.sem-etiqueta{font-size:8px;letter-spacing:.2em;text-transform:uppercase;padding:3px 9px;
+  border:1px solid var(--gold);color:var(--gold);border-radius:2px}
+.sem-meta{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:9.5px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.sem-meta .preench b{color:var(--gold-light);font-weight:400}
+.sem-estado{font-size:9px;letter-spacing:.16em;min-width:66px;text-align:right}
+.sem-estado.salvando{color:var(--gold)}
+.sem-estado.salvo{color:var(--ok)}
+.sem-estado.erro{color:var(--erro)}
+.chev{width:8px;height:8px;border-right:1px solid var(--gold);border-bottom:1px solid var(--gold);
+  transform:rotate(45deg);transition:transform .3s;flex-shrink:0}
+.semana.aberta .chev{transform:rotate(-135deg)}
+.semana-corpo{display:none;padding:4px 20px 20px;border-top:1px solid rgba(255,255,255,.07)}
+.semana.aberta .semana-corpo{display:block}
+
+.entrada{display:grid;grid-template-columns:44px 1fr;gap:16px;padding:16px 0;
+  border-bottom:1px dashed rgba(255,255,255,.07)}
+.entrada:last-of-type{border-bottom:none}
+.entrada .romano{font-family:var(--serif);font-size:17px;color:var(--gold);opacity:.75;
+  padding-top:6px;letter-spacing:.08em}
+.campos{display:grid;grid-template-columns:132px 1fr 148px;gap:10px}
+.campos .larga{grid-column:1/-1}
+.campos input,.campos select,.campos textarea{width:100%;background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.1);border-radius:2px;padding:9px 11px;
+  font-size:12.5px;font-weight:300;letter-spacing:.015em;transition:.18s}
+.campos textarea{resize:vertical;min-height:44px;line-height:1.6}
+.campos input::placeholder,.campos textarea::placeholder{color:rgba(255,255,255,.3)}
+.campos input:focus,.campos textarea:focus,.campos select:focus{
+  border-color:rgba(196,164,90,.55);background:rgba(255,255,255,.06)}
+.campos select option{background:var(--navy);color:var(--cream)}
+.campos input[type=date]{color-scheme:dark}
+.entrada[data-status="Concluída"] .romano{opacity:1;color:var(--ok)}
+.entrada[data-status="Cancelada"]{opacity:.5}
+
+.acoes-semana{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;padding-top:16px;
+  border-top:1px solid rgba(196,164,90,.18)}
+.acoes-semana .dir{margin-left:auto}
+
+.vazio-geral{text-align:center;padding:90px 20px;color:var(--muted)}
+.vazio-geral p{font-family:var(--serif);font-size:23px;font-style:italic;color:var(--gold);margin-bottom:12px}
+.vazio-geral small{font-size:12px;letter-spacing:.05em;line-height:1.8;display:block;max-width:420px;margin:0 auto}
+
+#aviso{position:fixed;bottom:26px;left:50%;transform:translate(-50%,80px);z-index:60;
+  background:var(--navy-mid);border:1px solid rgba(196,164,90,.4);border-radius:3px;
+  padding:13px 24px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  transition:transform .35s,opacity .35s;opacity:0}
+#aviso.on{transform:translate(-50%,0);opacity:1}
+#aviso.falha{border-color:var(--erro);color:var(--erro)}
+
+@media(max-width:900px){
+  .corpo{grid-template-columns:1fr}
+  aside{position:fixed;inset:65px 0 0 0;height:auto;z-index:35;background:var(--navy-deep);
+    display:none;border-right:none}
+  aside.on{display:block}
+  .menu-mob{display:block}
+  .topo .titulo{display:none}
+  main{padding:24px 18px 80px}
+  .cabecalho-aluno h1{font-size:29px}
+  .campos{grid-template-columns:1fr}
+  .sem-num{min-width:56px;padding-right:12px}
+  .sem-tit{font-size:16px}
+  .sem-meta .preench{display:none}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media print{
+  body{background:#fff;color:#111}
+  #pin,aside,.barra,.topo .dir,.acoes-semana,#aviso{display:none!important}
+  .semana-corpo{display:block!important}
+  .campos input,.campos textarea,.campos select{border:none;background:none;color:#111}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════ PIN ══════ -->
+<div id="pin">
+  <div class="pin-marca">Instituto MD Talk</div>
+  <div class="pin-sub">Cronogramas Semanais</div>
+  <div class="pin-pontos"><i></i><i></i><i></i><i></i></div>
+  <div class="pin-teclado" id="teclado">
+    <button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button>
+    <button data-v="4">4</button><button data-v="5">5</button><button data-v="6">6</button>
+    <button data-v="7">7</button><button data-v="8">8</button><button data-v="9">9</button>
+    <button class="vazio" disabled></button><button data-v="0">0</button>
+    <button data-v="del">&#8592;</button>
+  </div>
+  <div class="pin-erro" id="pinErro">Código incorreto</div>
+</div>
+
+<!-- ══════ APLICAÇÃO ══════ -->
+<div id="app">
+  <header class="topo">
+    <button class="menu-mob" id="menuMob">Alunos</button>
+    <div class="marca">MD Talk<span>The Engine Lab</span></div>
+    <div class="titulo">Cronogramas <em>semanais</em></div>
+    <div class="dir">
+      <div class="conexao" id="conexao"><b></b><span>Conectando</span></div>
+      <button class="btn discreto" id="btnRecarregar">Recarregar</button>
+    </div>
+  </header>
+
+  <div class="corpo">
+    <aside id="aside">
+      <div class="aside-tit">Alunos</div>
+      <div class="busca"><input type="text" id="busca" placeholder="Buscar aluno" autocomplete="off"></div>
+      <ul class="lista-alunos" id="listaAlunos"></ul>
+      <div class="aside-vazio" id="asideVazio" hidden></div>
+    </aside>
+
+    <main id="painel">
+      <div class="vazio-geral" id="vazioGeral">
+        <p>Selecione um aluno</p>
+        <small>Cada aluno tem um cronograma próprio, com cinco entradas por semana. As semanas anteriores ficam recolhidas ao final da página.</small>
+      </div>
+      <div id="conteudo" hidden>
+        <div class="cabecalho-aluno">
+          <div class="rotulo">Registro pedagógico</div>
+          <h1 id="nomeAluno"></h1>
+          <div class="resumo" id="resumoAluno"></div>
+        </div>
+        <div class="barra">
+          <select id="horizonte">
+            <option value="10">10 semanas à frente</option>
+            <option value="16">16 semanas à frente</option>
+            <option value="24">24 semanas à frente</option>
+          </select>
+          <button class="btn discreto" id="btnExpandir">Abrir todas</button>
+          <button class="btn discreto" id="btnRecolher">Recolher todas</button>
+          <button class="btn discreto" id="btnImprimir">Imprimir</button>
+        </div>
+        <div id="semanasFuturas"></div>
+        <div class="grupo-tit" id="tituloAnteriores" hidden>
+          <h2>Semanas anteriores</h2><hr>
+          <button class="btn discreto" id="btnMaisAnteriores">Carregar mais</button>
+        </div>
+        <div id="semanasAnteriores"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="aviso"></div>
+
+<script>
+/* ═══════════════ CONFIGURAÇÃO ═══════════════ */
+
+// Cole aqui a URL do app da web publicado pelo Apps Script (termina em /exec)
+const API = 'COLE_AQUI_A_URL_DO_APPS_SCRIPT';
+
+const PIN = '2204';
+const STATUS = ['Planejada','Em curso','Concluída','Remarcada','Cancelada'];
+const ROMANOS = ['I','II','III','IV','V'];
+const ENTRADAS_POR_SEMANA = 5;
+const SEMANAS_ANTERIORES_INICIAL = 6;
+
+/* ═══════════════ ESTADO ═══════════════ */
+
+const estado = {
+  alunos: [],
+  aluno: null,
+  dados: {},              // { '2026-S33': [ {slot,data,foco,atividade,status,obs} ] }
+  abertas: new Set(),
+  horizonte: 10,
+  anteriores: SEMANAS_ANTERIORES_INICIAL,
+  timers: {}
+};
+
+/* ═══════════════ TELA DE PIN ═══════════════ */
+
+let digitado = '';
+const pontos = document.querySelectorAll('.pin-pontos i');
+
+document.getElementById('teclado').addEventListener('click', function(ev){
+  const b = ev.target.closest('button[data-v]');
+  if (!b) return;
+  teclar(b.dataset.v);
+});
+document.addEventListener('keydown', function(ev){
+  if (document.getElementById('pin').classList.contains('saindo')) return;
+  if (/^[0-9]$/.test(ev.key)) teclar(ev.key);
+  if (ev.key === 'Backspace') teclar('del');
+});
+
+function teclar(v){
+  if (v === 'del') digitado = digitado.slice(0,-1);
+  else if (digitado.length < 4) digitado += v;
+  pontos.forEach(function(p,i){ p.classList.toggle('on', i < digitado.length); });
+  if (digitado.length === 4) setTimeout(verificarPin, 180);
+}
+
+function verificarPin(){
+  if (digitado === PIN){
+    document.getElementById('pin').classList.add('saindo');
+    setTimeout(function(){
+      document.getElementById('pin').style.display = 'none';
+      document.getElementById('app').classList.add('on');
+      iniciar();
+    }, 600);
+  } else {
+    document.getElementById('pin').classList.add('tremer');
+    document.getElementById('pinErro').classList.add('on');
+    setTimeout(function(){
+      document.getElementById('pin').classList.remove('tremer');
+      document.getElementById('pinErro').classList.remove('on');
+      digitado = '';
+      pontos.forEach(function(p){ p.classList.remove('on'); });
+    }, 900);
+  }
+}
+
+/* ═══════════════ SEMANAS (utilitários) ═══════════════ */
+
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho',
+               'julho','agosto','setembro','outubro','novembro','dezembro'];
+
+function segundaDe(d){
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x;
+}
+function somarDias(d, n){
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() + n);
+  return x;
+}
+function chaveSemana(d){
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 6) % 7) + 3);
+  const quinta = new Date(Date.UTC(t.getUTCFullYear(), 0, 4));
+  quinta.setUTCDate(quinta.getUTCDate() - ((quinta.getUTCDay() + 6) % 7) + 3);
+  const n = 1 + Math.round((t - quinta) / 604800000);
+  return t.getUTCFullYear() + '-S' + String(n).padStart(2, '0');
+}
+function iso(d){
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function rotuloSemana(seg){
+  const sex = somarDias(seg, 4);
+  if (seg.getMonth() === sex.getMonth())
+    return seg.getDate() + ' a ' + sex.getDate() + ' de ' + MESES[seg.getMonth()];
+  return seg.getDate() + ' de ' + MESES[seg.getMonth()] + ' a ' + sex.getDate() + ' de ' + MESES[sex.getMonth()];
+}
+
+/* ═══════════════ COMUNICAÇÃO COM A PLANILHA ═══════════════ */
+
+function chamarGet(parametros){
+  return new Promise(function(resolve, reject){
+    if (!API || API.indexOf('COLE_AQUI') === 0){
+      reject(new Error('URL do Apps Script não configurada no arquivo.'));
+      return;
+    }
+    const cb = 'mdt_' + Math.random().toString(36).slice(2);
+    const partes = Object.keys(parametros).map(function(k){
+      return encodeURIComponent(k) + '=' + encodeURIComponent(parametros[k]);
+    });
+    partes.push('callback=' + cb);
+    const script = document.createElement('script');
+    const limite = setTimeout(function(){ limpar(); reject(new Error('Tempo esgotado.')); }, 25000);
+    function limpar(){ clearTimeout(limite); delete window[cb]; script.remove(); }
+    window[cb] = function(resposta){
+      limpar();
+      if (resposta && resposta.ok) resolve(resposta);
+      else reject(new Error((resposta && resposta.erro) || 'Resposta inválida.'));
+    };
+    script.onerror = function(){ limpar(); reject(new Error('Falha de rede.')); };
+    script.src = API + '?' + partes.join('&');
+    document.body.appendChild(script);
+  });
+}
+
+function chamarPost(corpo){
+  return fetch(API, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain;charset=utf-8'},
+    body: JSON.stringify(corpo)
+  }).then(function(r){ return r.json(); }).then(function(resposta){
+    if (!resposta.ok) throw new Error(resposta.erro || 'Falha ao gravar.');
+    return resposta;
+  }).catch(function(){
+    // se o POST for bloqueado pelo navegador, grava pela via alternativa
+    return chamarGet({action:'salvarSemana', dados: JSON.stringify(corpo)});
+  });
+}
+
+function marcarConexao(classe, texto){
+  const el = document.getElementById('conexao');
+  el.className = 'conexao ' + classe;
+  el.querySelector('span').textContent = texto;
+}
+
+function avisar(texto, falha){
+  const el = document.getElementById('aviso');
+  el.textContent = texto;
+  el.className = 'on' + (falha ? ' falha' : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.className = ''; }, 3200);
+}
+
+/* ═══════════════ CARGA ═══════════════ */
+
+function iniciar(){
+  carregarAlunos();
+  document.getElementById('btnRecarregar').onclick = function(){
+    carregarAlunos();
+    if (estado.aluno) carregarCronograma(estado.aluno);
+  };
+  document.getElementById('busca').oninput = renderizarLista;
+  document.getElementById('menuMob').onclick = function(){
+    document.getElementById('aside').classList.toggle('on');
+  };
+  document.getElementById('horizonte').onchange = function(){
+    estado.horizonte = Number(this.value);
+    renderizarSemanas();
+  };
+  document.getElementById('btnExpandir').onclick = function(){
+    document.querySelectorAll('#semanasFuturas .semana').forEach(function(el){
+      if (!el.classList.contains('aberta')) alternarSemana(el);
+    });
+  };
+  document.getElementById('btnRecolher').onclick = function(){
+    document.querySelectorAll('.semana.aberta').forEach(function(el){
+      el.classList.remove('aberta'); estado.abertas.delete(el.dataset.sem);
+    });
+  };
+  document.getElementById('btnImprimir').onclick = function(){ window.print(); };
+  document.getElementById('btnMaisAnteriores').onclick = function(){
+    estado.anteriores += 8;
+    renderizarSemanas();
+  };
+}
+
+function carregarAlunos(){
+  marcarConexao('', 'Carregando');
+  chamarGet({action:'alunos'}).then(function(r){
+    estado.alunos = r.alunos || [];
+    marcarConexao('ok', 'Planilha conectada');
+    renderizarLista();
+    if (!estado.alunos.length){
+      const v = document.getElementById('asideVazio');
+      v.hidden = false;
+      v.textContent = 'Nenhum aluno encontrado na aba configurada da planilha.';
+    }
+  }).catch(function(e){
+    marcarConexao('falha', 'Sem conexão');
+    const v = document.getElementById('asideVazio');
+    v.hidden = false;
+    v.textContent = e.message;
+  });
+}
+
+function renderizarLista(){
+  const termo = document.getElementById('busca').value.trim().toLowerCase();
+  const ul = document.getElementById('listaAlunos');
+  ul.innerHTML = '';
+  estado.alunos
+    .filter(function(n){ return !termo || n.toLowerCase().indexOf(termo) > -1; })
+    .forEach(function(nome){
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.textContent = nome;
+      if (nome === estado.aluno) b.className = 'ativo';
+      b.onclick = function(){
+        estado.aluno = nome;
+        document.getElementById('aside').classList.remove('on');
+        renderizarLista();
+        carregarCronograma(nome);
+      };
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+}
+
+function carregarCronograma(aluno){
+  document.getElementById('vazioGeral').hidden = true;
+  document.getElementById('conteudo').hidden = false;
+  document.getElementById('nomeAluno').textContent = aluno;
+  document.getElementById('resumoAluno').innerHTML = '<span>Carregando cronograma</span>';
+  document.getElementById('semanasFuturas').innerHTML = '';
+  document.getElementById('semanasAnteriores').innerHTML = '';
+  estado.dados = {};
+  estado.abertas = new Set();
+  estado.anteriores = SEMANAS_ANTERIORES_INICIAL;
+
+  chamarGet({action:'cronograma', aluno:aluno}).then(function(r){
+    if (estado.aluno !== aluno) return;
+    (r.entradas || []).forEach(function(en){
+      if (!estado.dados[en.semana]) estado.dados[en.semana] = [];
+      estado.dados[en.semana].push(en);
+    });
+    marcarConexao('ok', 'Planilha conectada');
+    renderizarSemanas();
+  }).catch(function(e){
+    marcarConexao('falha', 'Sem conexão');
+    avisar(e.message, true);
+  });
+}
+
+/* ═══════════════ RENDERIZAÇÃO DAS SEMANAS ═══════════════ */
+
+function entradasDa(chave, seg){
+  if (!estado.dados[chave]){
+    estado.dados[chave] = [];
+  }
+  const linhas = [];
+  for (let i = 0; i < ENTRADAS_POR_SEMANA; i++){
+    const achada = estado.dados[chave].find(function(e){ return Number(e.slot) === i+1; });
+    linhas.push(achada || {
+      slot: i+1, data: iso(somarDias(seg, i)),
+      foco: '', atividade: '', status: 'Planejada', obs: ''
+    });
+  }
+  estado.dados[chave] = linhas;
+  return linhas;
+}
+
+function contarSemana(chave){
+  const linhas = estado.dados[chave] || [];
+  let preenchidas = 0, concluidas = 0;
+  linhas.forEach(function(e){
+    if ((e.foco || '').trim() || (e.atividade || '').trim()) preenchidas++;
+    if (e.status === 'Concluída') concluidas++;
+  });
+  return {preenchidas: preenchidas, concluidas: concluidas};
+}
+
+function renderizarSemanas(){
+  const hoje = new Date();
+  const segAtual = segundaDe(hoje);
+  const futuras = document.getElementById('semanasFuturas');
+  const anteriores = document.getElementById('semanasAnteriores');
+  futuras.innerHTML = '';
+  anteriores.innerHTML = '';
+
+  for (let i = 0; i < estado.horizonte; i++){
+    const seg = somarDias(segAtual, i * 7);
+    futuras.appendChild(criarSemana(seg, i === 0));
+  }
+  for (let i = 1; i <= estado.anteriores; i++){
+    const seg = somarDias(segAtual, -i * 7);
+    anteriores.appendChild(criarSemana(seg, false));
+  }
+  document.getElementById('tituloAnteriores').hidden = false;
+
+  // a semana corrente já abre pronta para uso
+  const primeira = futuras.querySelector('.semana');
+  if (primeira && !estado.abertas.size) alternarSemana(primeira);
+
+  atualizarResumoAluno();
+}
+
+function atualizarResumoAluno(){
+  const chaves = Object.keys(estado.dados);
+  let semanas = 0, entradas = 0, concluidas = 0;
+  chaves.forEach(function(k){
+    const c = contarSemana(k);
+    if (c.preenchidas) semanas++;
+    entradas += c.preenchidas;
+    concluidas += c.concluidas;
+  });
+  document.getElementById('resumoAluno').innerHTML =
+    '<span><b>' + semanas + '</b> semanas planejadas</span>' +
+    '<span><b>' + entradas + '</b> entradas</span>' +
+    '<span><b>' + concluidas + '</b> concluídas</span>';
+}
+
+function criarSemana(seg, ehAtual){
+  const chave = chaveSemana(seg);
+  const numero = chave.split('-S')[1];
+  entradasDa(chave, seg);
+  const contagem = contarSemana(chave);
+
+  const art = document.createElement('article');
+  art.className = 'semana' + (ehAtual ? ' atual' : '');
+  art.dataset.sem = chave;
+  art.dataset.seg = iso(seg);
+
+  const cab = document.createElement('button');
+  cab.className = 'semana-cab';
+  cab.innerHTML =
+    '<span class="sem-num">Semana ' + numero + '</span>' +
+    '<span class="sem-tit">' + rotuloSemana(seg) + '</span>' +
+    (ehAtual ? '<span class="sem-etiqueta">Semana atual</span>' : '') +
+    '<span class="sem-meta">' +
+      '<span class="preench"><b>' + contagem.preenchidas + '</b>/' + ENTRADAS_POR_SEMANA + ' preenchidas</span>' +
+      '<span class="sem-estado"></span>' +
+      '<span class="chev"></span>' +
+    '</span>';
+  cab.onclick = function(){ alternarSemana(art); };
+  art.appendChild(cab);
+
+  const corpo = document.createElement('div');
+  corpo.className = 'semana-corpo';
+  art.appendChild(corpo);
+
+  if (estado.abertas.has(chave)){
+    art.classList.add('aberta');
+    montarCorpo(art);
+  }
+  return art;
+}
+
+function alternarSemana(art){
+  const chave = art.dataset.sem;
+  if (art.classList.contains('aberta')){
+    art.classList.remove('aberta');
+    estado.abertas.delete(chave);
+  } else {
+    art.classList.add('aberta');
+    estado.abertas.add(chave);
+    if (!art.querySelector('.entrada')) montarCorpo(art);
+  }
+}
+
+function montarCorpo(art){
+  const chave = art.dataset.sem;
+  const seg = new Date(art.dataset.seg + 'T00:00:00');
+  const linhas = entradasDa(chave, seg);
+  const corpo = art.querySelector('.semana-corpo');
+  corpo.innerHTML = '';
+
+  linhas.forEach(function(linha, i){
+    const div = document.createElement('div');
+    div.className = 'entrada';
+    div.dataset.status = linha.status;
+    div.innerHTML =
+      '<div class="romano">' + ROMANOS[i] + '</div>' +
+      '<div class="campos">' +
+        '<input type="date" data-c="data" value="' + (linha.data || '') + '">' +
+        '<input type="text" data-c="foco" placeholder="Foco da aula ou estrutura" value="' + escapar(linha.foco) + '">' +
+        '<select data-c="status">' + STATUS.map(function(s){
+          return '<option' + (s === linha.status ? ' selected' : '') + '>' + s + '</option>';
+        }).join('') + '</select>' +
+        '<textarea class="larga" data-c="atividade" placeholder="Atividade, material e tarefa">' + escapar(linha.atividade) + '</textarea>' +
+        '<input class="larga" type="text" data-c="obs" placeholder="Observações" value="' + escapar(linha.obs) + '">' +
+      '</div>';
+    div.querySelectorAll('[data-c]').forEach(function(campo){
+      campo.addEventListener('input', function(){
+        linha[campo.dataset.c] = campo.value;
+        if (campo.dataset.c === 'status') div.dataset.status = campo.value;
+        atualizarContagem(art);
+        agendarGravacao(art);
+      });
+    });
+    corpo.appendChild(div);
+  });
+
+  const acoes = document.createElement('div');
+  acoes.className = 'acoes-semana';
+  acoes.innerHTML =
+    '<button class="btn discreto" data-a="copiar">Copiar semana anterior</button>' +
+    '<button class="btn discreto" data-a="limpar">Limpar semana</button>' +
+    '<button class="btn cheio dir" data-a="salvar">Salvar semana</button>';
+  acoes.querySelector('[data-a="copiar"]').onclick = function(){ copiarAnterior(art); };
+  acoes.querySelector('[data-a="limpar"]').onclick = function(){ limparSemana(art); };
+  acoes.querySelector('[data-a="salvar"]').onclick = function(){ gravar(art); };
+  corpo.appendChild(acoes);
+}
+
+function escapar(t){
+  return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function atualizarContagem(art){
+  const c = contarSemana(art.dataset.sem);
+  const el = art.querySelector('.preench');
+  if (el) el.innerHTML = '<b>' + c.preenchidas + '</b>/' + ENTRADAS_POR_SEMANA + ' preenchidas';
+  atualizarResumoAluno();
+}
+
+function copiarAnterior(art){
+  const seg = new Date(art.dataset.seg + 'T00:00:00');
+  const anterior = chaveSemana(somarDias(seg, -7));
+  const origem = estado.dados[anterior];
+  if (!origem || !contarSemana(anterior).preenchidas){
+    avisar('A semana anterior está vazia', true);
+    return;
+  }
+  const destino = estado.dados[art.dataset.sem];
+  origem.forEach(function(en, i){
+    destino[i].foco = en.foco;
+    destino[i].atividade = en.atividade;
+    destino[i].obs = en.obs;
+    destino[i].status = 'Planejada';
+  });
+  montarCorpo(art);
+  atualizarContagem(art);
+  gravar(art);
+}
+
+function limparSemana(art){
+  if (!confirm('Apagar as cinco entradas desta semana?')) return;
+  const seg = new Date(art.dataset.seg + 'T00:00:00');
+  estado.dados[art.dataset.sem] = null;
+  entradasDa(art.dataset.sem, seg);
+  montarCorpo(art);
+  atualizarContagem(art);
+  gravar(art);
+}
+
+/* ═══════════════ GRAVAÇÃO ═══════════════ */
+
+function agendarGravacao(art){
+  const chave = art.dataset.sem;
+  estadoSemana(art, 'salvando', 'Editando');
+  clearTimeout(estado.timers[chave]);
+  estado.timers[chave] = setTimeout(function(){ gravar(art); }, 2000);
+}
+
+function estadoSemana(art, classe, texto){
+  const el = art.querySelector('.sem-estado');
+  if (el){ el.className = 'sem-estado ' + classe; el.textContent = texto; }
+}
+
+function gravar(art){
+  const chave = art.dataset.sem;
+  clearTimeout(estado.timers[chave]);
+  estado.timers[chave] = null;
+  const aluno = estado.aluno;
+  if (!aluno) return;
+  estadoSemana(art, 'salvando', 'Salvando');
+  chamarPost({
+    action: 'salvarSemana',
+    aluno: aluno,
+    semana: chave,
+    entradas: estado.dados[chave] || []
+  }).then(function(){
+    estadoSemana(art, 'salvo', 'Salvo');
+    setTimeout(function(){ estadoSemana(art, '', ''); }, 2500);
+  }).catch(function(e){
+    estadoSemana(art, 'erro', 'Erro');
+    avisar('Não foi possível salvar: ' + e.message, true);
+  });
+}
+
+document.addEventListener('keydown', function(ev){
+  if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 's'){
+    ev.preventDefault();
+    const ativa = document.activeElement.closest('.semana');
+    if (ativa) gravar(ativa);
+    else document.querySelectorAll('.semana.aberta').forEach(gravar);
+  }
+});
+
+window.addEventListener('beforeunload', function(ev){
+  const pendente = Object.keys(estado.timers).some(function(k){ return estado.timers[k]; });
+  if (pendente){ ev.preventDefault(); ev.returnValue = ''; }
+});
+</script>
+</body>
+</html>
