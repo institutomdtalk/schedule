@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -819,6 +818,20 @@ const AUTOSAVE_MS = 1200;
 const REQUEST_TIMEOUT_MS = 25000;
 const LS_PREFIX = 'mdtalk-cronograma-v2:';
 
+// O aplicativo deve rodar pela URL publicada do Apps Script.
+// Se este HTML for aberto como arquivo/preview, encaminha automaticamente.
+const IS_APPS_SCRIPT_HOST = !!(window.google && google.script && google.script.run);
+if (!IS_APPS_SCRIPT_HOST) {
+  setTimeout(() => {
+    try {
+      if (window.top) window.top.location.href = DEPLOYMENT_URL;
+      else window.location.href = DEPLOYMENT_URL;
+    } catch (_) {
+      window.location.href = DEPLOYMENT_URL;
+    }
+  }, 50);
+}
+
 const state = {
   students: [],
   student: null,
@@ -914,7 +927,15 @@ function setNetwork(kind, text){
 function serverCall(method, payload){
   return new Promise((resolve,reject) => {
     if (!(window.google && google.script && google.script.run)){
-      reject(new Error('Este arquivo deve ser aberto pela URL publicada do Apps Script, não diretamente como arquivo HTML.'));
+      // Se o arquivo for aberto diretamente (download/preview), não tenta executar
+      // a aplicação fora do ambiente do Apps Script. Encaminha para o Web App.
+      try {
+        if (window.top) window.top.location.href = DEPLOYMENT_URL;
+        else window.location.href = DEPLOYMENT_URL;
+      } catch (_) {
+        window.location.href = DEPLOYMENT_URL;
+      }
+      reject(new Error('Redirecionando para o site publicado…'));
       return;
     }
 
