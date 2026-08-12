@@ -183,6 +183,7 @@ main{padding:32px 36px 90px;min-width:0}
 
 .vazio-geral{text-align:center;padding:90px 20px;color:var(--tinta-suave)}
 .vazio-geral p{font-family:var(--serif);font-size:24px;font-style:italic;color:var(--vinho);margin-bottom:12px}
+.vazio-geral a{color:var(--vinho);font-weight:600}
 .vazio-geral small{font-size:12.5px;color:var(--tinta);letter-spacing:.05em;line-height:1.8;display:block;max-width:430px;margin:0 auto}
 
 #aviso{position:fixed;bottom:26px;left:50%;transform:translate(-50%,80px);z-index:60;
@@ -439,7 +440,23 @@ function carregarAlunos(){
     const v = document.getElementById('asideVazio');
     v.hidden = false;
     v.textContent = e.message;
+    mostrarFalha(e.message);
   });
+}
+
+function mostrarFalha(mensagem){
+  const alvo = document.getElementById('vazioGeral');
+  alvo.hidden = false;
+  document.getElementById('conteudo').hidden = true;
+  alvo.innerHTML =
+    '<p>A planilha não respondeu</p>' +
+    '<small><b>' + escapar(mensagem) + '</b><br><br>' +
+    'Verifique, no editor do Apps Script, se a implantação está como <b>App da Web</b> ' +
+    'com acesso para <b>qualquer pessoa</b> — e não para “qualquer pessoa com conta do Google”. ' +
+    'Depois de alterar o código, é preciso criar uma <b>nova implantação</b>: salvar sozinho não publica a versão. ' +
+    'Para conferir, abra a URL abaixo numa janela anônima; ela deve devolver um texto começando com <b>{"ok":true</b>.' +
+    '</small>' +
+    '<small style="margin-top:18px"><a href="' + API + '?action=ping" target="_blank" rel="noopener">Testar a conexão em outra aba</a></small>';
 }
 
 function renderizarLista(){
@@ -485,7 +502,8 @@ function carregarCronograma(aluno){
     renderizarSemanas();
   }).catch(function(e){
     marcarConexao('falha', 'Sem conexão');
-    avisar(e.message, true);
+    renderizarSemanas();          // a grade aparece mesmo sem os dados
+    avisar('Sem conexão com a planilha: ' + e.message, true);
   });
 }
 
@@ -551,8 +569,8 @@ function atualizarResumoAluno(){
     concluidas += c.concluidas;
   });
   document.getElementById('resumoAluno').innerHTML =
-    '<span><b>' + semanas + '</b> semanas registradas</span>' +
-    '<span><b>' + concluidas + '</b> concluídas</span>';
+    '<span><b>' + semanas + '</b> ' + (semanas === 1 ? 'semana registrada' : 'semanas registradas') + '</span>' +
+    '<span><b>' + concluidas + '</b> ' + (concluidas === 1 ? 'concluída' : 'concluídas') + '</span>';
 }
 
 function criarSemana(seg, ehAtual){
