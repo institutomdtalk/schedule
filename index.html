@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -811,6 +810,8 @@ body{
 // Nesta versão o navegador NÃO acessa o backend diretamente.
 // A comunicação passa por google.script.run e pelo proxy do Apps Script.
 
+const API = 'https://script.google.com/macros/s/AKfycbzGbMTW1FuhGf4ZJM85lEy6QrbctiRS6hYb36_nwidksb6h5Fqxj5CWma4zefbBERfPaw/exec';
+
 const STATUS = ['Planejada','Em curso','Concluída','Remarcada','Cancelada'];
 const PAST_INITIAL = 6;
 const AUTOSAVE_MS = 1200;
@@ -902,17 +903,20 @@ function hasPending(){
   return state.dirty.size > 0 || state.inFlight.size > 0 || [...state.timers.values()].some(Boolean);
 }
 
-/* ========= REDE — MODO APPS SCRIPT NATIVO ========= */
+/* ========= REDE — MODO HÍBRIDO ========= */
 function setNetwork(kind, text){
   const el = $('net');
   el.className = 'net ' + (kind || '');
   el.querySelector('span').textContent = text;
 }
+function hasAppsScriptNative(){
+  return !!(window.google && window.google.script && window.google.script.run);
+}
 function scriptRun(method, payload){
   return new Promise((resolve,reject) => {
     const runner = window.google?.script?.run;
     if (!runner){
-      reject(new Error('Esta versão deve ser aberta pela URL do Web App do Apps Script, não pelo preview do arquivo.'));
+      reject(new Error('google.script.run indisponível.'));
       return;
     }
     let finished = false;
@@ -921,7 +925,6 @@ function scriptRun(method, payload){
       finished = true;
       reject(new Error('Tempo esgotado ao acessar o Apps Script.'));
     }, REQUEST_TIMEOUT_MS);
-
     const ok = (response) => {
       if (finished) return;
       finished = true;
@@ -935,19 +938,70 @@ function scriptRun(method, payload){
       clearTimeout(timeout);
       reject(new Error(err?.message || String(err || 'Falha no Apps Script.')));
     };
-
     try{
       runner.withSuccessHandler(ok).withFailureHandler(fail)[method](payload);
-    }catch(err){
-      fail(err);
-    }
+    }catch(err){ fail(err); }
   });
 }
+function jsonpDirect(params){
+  return new Promise((resolve,reject) => {
+    if (!API) return reject(new Error('URL do Apps Script não configurada.'));
+    const cb = 'mdt_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
+    const query = Object.entries(params).map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
+    const script = document.createElement('script');
+    let finished = false;
+    const cleanup = () => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timeout);
+      try{ delete window[cb]; }catch(_){ window[cb] = undefined; }
+      script.remove();
+    };
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('Tempo esgotado ao acessar a planilha.'));
+    }, REQUEST_TIMEOUT_MS);
+    window[cb] = (response) => {
+      cleanup();
+      if (response && response.ok) resolve(response);
+      else reject(new Error(response?.erro || 'Resposta inválida do Apps Script.'));
+    };
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('Falha de rede ao acessar o Apps Script.'));
+    };
+    script.src = API + '?' + query + '&callback=' + encodeURIComponent(cb) + '&_=' + Date.now();
+    document.body.appendChild(script);
+  });
+}
+async function postDirect(body){
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try{
+    const r = await fetch(API, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(body),
+      signal:controller.signal,
+      cache:'no-store'
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const response = await r.json();
+    if (!response?.ok) throw new Error(response?.erro || 'Falha ao gravar.');
+    return response;
+  }catch(err){
+    const payload = JSON.stringify(body);
+    if (payload.length > 7000) throw err;
+    return jsonpDirect({action:'salvarSemana', dados:payload});
+  }finally{
+    clearTimeout(timeout);
+  }
+}
 function apiGet(params){
-  return scriptRun('proxyGet', params);
+  return hasAppsScriptNative() ? scriptRun('proxyGet', params) : jsonpDirect(params);
 }
 function apiPost(body){
-  return scriptRun('proxyPost', body);
+  return hasAppsScriptNative() ? scriptRun('proxyPost', body) : postDirect(body);
 }
 
 /* ========= CACHE / RASCUNHOS ========= */
