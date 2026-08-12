@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -733,7 +734,6 @@ body{
     <div class="page-title">Cronogramas <em>semanais</em></div>
     <div class="top-actions">
       <div class="net" id="net" aria-live="polite"><i></i><span>Conectando</span></div>
-      <button class="icon-btn reload" id="connectionBtn" aria-label="Configurar conexão" title="Configurar conexão">⋯</button>
       <button class="icon-btn reload" id="reloadBtn" aria-label="Recarregar dados" title="Recarregar">↻</button>
     </div>
   </header>
@@ -811,20 +811,7 @@ body{
    GET  ?action=cronograma&aluno=...
    POST {action:'salvarSemana', aluno, semana, entradas}
 */
-const DEFAULT_API = 'https://script.google.com/macros/s/AKfycbzGbMTW1FuhGf4ZJM85lEy6QrbctiRS6hYb36_nwidksb6h5Fqxj5CWma4zefbBERfPaw/exec';
-function getApi(){
-  try { return localStorage.getItem('mdtalk-api-url') || DEFAULT_API; }
-  catch (_) { return DEFAULT_API; }
-}
-function normalizeApiUrl(url){
-  url = String(url || '').trim();
-  if (!url) return '';
-  url = url.split('?')[0].replace(/\/$/,'');
-  return url;
-}
-function saveApiUrl(url){
-  try { localStorage.setItem('mdtalk-api-url', normalizeApiUrl(url)); } catch (_) {}
-}
+const DEPLOYMENT_URL = 'https://script.google.com/macros/s/AKfycbzGbMTW1FuhGf4ZJM85lEy6QrbctiRS6hYb36_nwidksb6h5Fqxj5CWma4zefbBERfPaw/exec';
 
 const STATUS = ['Planejada','Em curso','Concluída','Remarcada','Cancelada'];
 const PAST_INITIAL = 6;
@@ -923,58 +910,50 @@ function setNetwork(kind, text){
   el.className = 'net ' + (kind || '');
   el.querySelector('span').textContent = text;
 }
-function jsonp(params){
+
+function serverCall(method, payload){
   return new Promise((resolve,reject) => {
-    const API = getApi();
-    if (!API) return reject(new Error('URL do Apps Script não configurada.'));
-    const cb = 'mdt_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
-    const query = Object.entries(params).map(([k,v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
-    const script = document.createElement('script');
-    let settled = false;
-    const cleanup = () => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeout);
-      try{ delete window[cb]; }catch(_){ window[cb] = undefined; }
-      script.remove();
+    if (!(window.google && google.script && google.script.run)){
+      reject(new Error('Este arquivo deve ser aberto pela URL publicada do Apps Script, não diretamente como arquivo HTML.'));
+      return;
+    }
+
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      reject(new Error('Tempo esgotado ao acessar a planilha.'));
+    }, REQUEST_TIMEOUT_MS);
+
+    const finish = (fn, value) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      fn(value);
     };
-    const timeout = setTimeout(() => { cleanup(); reject(new Error('Tempo esgotado ao acessar o Apps Script.')); }, REQUEST_TIMEOUT_MS);
-    window[cb] = (response) => {
-      cleanup();
-      if (response && response.ok) resolve(response);
-      else reject(new Error(response?.erro || 'Resposta inválida do Apps Script.'));
-    };
-    script.onerror = () => { cleanup(); reject(new Error('Falha de rede ao acessar o Apps Script.')); };
-    script.src = API + '?' + query + '&callback=' + encodeURIComponent(cb) + '&_=' + Date.now();
-    document.body.appendChild(script);
+
+    const runner = google.script.run
+      .withSuccessHandler((response) => {
+        if (response && response.ok) finish(resolve, response);
+        else finish(reject, new Error((response && response.erro) || 'Resposta inválida do Apps Script.'));
+      })
+      .withFailureHandler((err) => {
+        const msg = err && err.message ? err.message : String(err || 'Falha no Apps Script.');
+        finish(reject, new Error(msg));
+      });
+
+    if (method === 'apiGet') runner.apiGet(payload || {});
+    else if (method === 'apiPost') runner.apiPost(payload || {});
+    else finish(reject, new Error('Método de comunicação inválido.'));
   });
 }
+
+function jsonp(params){
+  return serverCall('apiGet', params);
+}
+
 async function apiPost(body){
-  const API = getApi();
-  if (!API) throw new Error('URL do Apps Script não configurada.');
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-  try{
-    const r = await fetch(API, {
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify(body),
-      signal:controller.signal,
-      cache:'no-store'
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const response = await r.json();
-    if (!response?.ok) throw new Error(response?.erro || 'Falha ao gravar.');
-    return response;
-  }catch(err){
-    // Mantém compatibilidade com o backend existente.
-    // A via GET é fallback; evite textos enormes se o navegador bloquear o POST.
-    const payload = JSON.stringify(body);
-    if (payload.length > 7000) throw new Error('O navegador bloqueou o POST e o conteúdo é grande demais para o modo alternativo. Tente recarregar a página.');
-    return jsonp({action:'salvarSemana', dados:payload});
-  }finally{
-    clearTimeout(timeout);
-  }
+  return serverCall('apiPost', body);
 }
 
 /* ========= CACHE / RASCUNHOS ========= */
@@ -1099,7 +1078,7 @@ async function loadStudents({silent=false}={}){
       $('sideEmpty').hidden = false;
       $('sideEmpty').textContent = err.message;
     }
-    if (!silent) toast('Sem conexão. Clique em ⋯ no topo e confira a URL /exec atual do Apps Script. ' + err.message,'error');
+    if (!silent) toast('Não foi possível atualizar a lista de alunos: ' + err.message,'error');
   }
 }
 async function selectStudent(student){
@@ -1477,29 +1456,6 @@ function bindEvents(){
   $('clearSearch').addEventListener('click',()=>{$('search').value='';renderStudents();$('search').focus()});
   $('menuBtn').addEventListener('click',()=>{$('sidebar').classList.toggle('open');$('overlay').classList.toggle('on')});
   $('overlay').addEventListener('click',closeSidebar);
-  $('connectionBtn').addEventListener('click', async()=>{
-    const atual = getApi();
-    const informado = window.prompt('Cole a URL atual do Web App do Apps Script (deve terminar em /exec):', atual);
-    if (informado === null) return;
-    const url = normalizeApiUrl(informado);
-    if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/i.test(url)){
-      toast('URL inválida. Cole a URL do Web App que termina em /exec.','error');
-      return;
-    }
-    saveApiUrl(url);
-    setNetwork('', 'Testando');
-    try{
-      const r = await jsonp({action:'alunos'});
-      state.students = Array.isArray(r.alunos) ? r.alunos : [];
-      cacheStudents(state.students);
-      renderStudents();
-      setNetwork('ok','Planilha conectada');
-      toast('Conexão atualizada com sucesso.','ok');
-    }catch(err){
-      setNetwork('falha','Sem conexão');
-      toast('A URL foi salva, mas o Apps Script não respondeu: ' + err.message,'error');
-    }
-  });
   $('reloadBtn').addEventListener('click',async()=>{
     await loadStudents({silent:true});
     if (state.student) await selectStudentReload(state.student);
