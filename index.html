@@ -620,11 +620,6 @@ body{
 .week.row-last{border-bottom:none}
 .week:hover{background:#FBFAFA}
 .week.open{background:#FDFCFC}
-.week[data-status="Planejada"]{border-left-color:var(--plan)}
-.week[data-status="Em curso"]{border-left-color:var(--curso)}
-.week[data-status="Concluída"]{border-left-color:var(--feito)}
-.week[data-status="Remarcada"]{border-left-color:var(--remar)}
-.week[data-status="Cancelada"]{border-left-color:var(--canc)}
 .week.current{
   border-left-color:var(--vinho);border-left-width:4px;
   background:linear-gradient(90deg,rgba(116,31,51,.04),transparent 55%);
@@ -655,12 +650,12 @@ body{
 .w-title.empty{font-style:italic;font-weight:400;color:#ACA5A8}
 .w-actions{flex:0 0 auto;display:flex;align-items:center;gap:7px}
 .w-link{background:none;border:none;padding:2px 1px;cursor:pointer;
-  font-family:var(--serif-fine);font-style:italic;font-size:14px;font-weight:500;
+  font-family:var(--sans);font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
   color:var(--tinta-2);
   border-bottom:1px solid transparent;transition:color .15s,border-color .15s}
 .w-link:hover{color:var(--vinho);border-color:var(--vinho-18)}
 .w-link.w-danger:hover{color:var(--erro);border-color:rgba(168,69,47,.32)}
-.w-sep{color:#C7C0C3;font-size:12px;position:relative;top:-1px}
+.w-sep{color:#C7C0C3;font-size:10px}
 .week-meta{gap:16px}
 .week-save{font-size:8px}
 .chev{width:7px;height:7px;border-color:#8D8386}
