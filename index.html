@@ -749,6 +749,11 @@ body{
   border-top:1px solid var(--vinho-12)}
 .entry-edit{animation:editIn .24s ease}
 @keyframes editIn{from{opacity:0}to{opacity:1}}
+.obs-toggle{
+  justify-self:start;background:none;border:none;cursor:pointer;padding:5px 1px;
+  font-size:11.5px;color:var(--tinta-2);border-bottom:1px dashed var(--linha);
+  transition:color .16s,border-color .16s}
+.obs-toggle:hover{color:var(--vinho);border-color:var(--vinho-18)}
 </style>
 </head>
 <body>
@@ -1394,15 +1399,32 @@ function buildEditForm(article){
   const div = document.createElement('div');
   div.className = 'entry' + (entry.status === 'Cancelada' ? ' cancelled' : '');
   div.innerHTML =
-    '<div class="field-label">Programação da semana</div>' +
     '<div class="fields">' +
       '<input type="text" data-field="foco" aria-label="Foco da aula" placeholder="Foco da aula ou estrutura" value="' + escapeHTML(entry.foco || '') + '">' +
       '<select data-field="status" aria-label="Status">' +
         STATUS.map(s => '<option' + (s === entry.status ? ' selected' : '') + '>' + escapeHTML(s) + '</option>').join('') +
       '</select>' +
       '<textarea class="wide" data-field="atividade" aria-label="Conteúdo e tarefa" placeholder="Conteúdo, material e tarefa da semana">' + escapeHTML(entry.atividade || '') + '</textarea>' +
-      '<input class="wide" type="text" data-field="obs" aria-label="Observações" placeholder="Observações (opcional)" value="' + escapeHTML(entry.obs || '') + '">' +
+      (entry.obs
+        ? '<input class="wide" type="text" data-field="obs" aria-label="Observações" placeholder="Observações (opcional)" value="' + escapeHTML(entry.obs) + '">'
+        : '<button type="button" class="obs-toggle wide" data-action="add-obs">+ Observação</button>') +
     '</div>';
+  const obsToggle = div.querySelector('[data-action="add-obs"]');
+  if (obsToggle) obsToggle.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.className = 'wide';
+    input.type = 'text';
+    input.dataset.field = 'obs';
+    input.setAttribute('aria-label','Observações');
+    input.placeholder = 'Observações (opcional)';
+    obsToggle.replaceWith(input);
+    input.focus();
+    input.addEventListener('input', () => {
+      entry.obs = input.value;
+      markDirty(article);
+      refreshWeekHeader(article);
+    });
+  });
   for (const field of div.querySelectorAll('[data-field]')){
     const event = field.tagName === 'SELECT' ? 'change' : 'input';
     field.addEventListener(event, () => {
