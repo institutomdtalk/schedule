@@ -624,30 +624,29 @@ body{
 }
 .week.current:hover,.week.current.open{background:linear-gradient(90deg,rgba(116,31,51,.05),transparent 55%)}
 .week-head{
-  min-height:82px;
-  grid-template-columns:72px minmax(0,1fr) auto;
-  gap:16px;
-  padding:12px 18px 12px 14px;
+  display:flex;align-items:center;
+  min-height:52px;
+  gap:14px;
+  padding:12px 20px;
   border-radius:0;
 }
 .week-head:hover{background:#FCFBFB}
-.date-mark{
-  justify-self:stretch;text-align:center;padding:8px 6px;
-  border-radius:13px;background:#F6F4F4;border:1px solid rgba(23,19,21,.055)
+.w-date{
+  flex:0 0 auto;width:56px;
+  font-family:var(--sans);font-size:11.5px;font-weight:700;letter-spacing:.02em;
+  color:var(--tinta-2);text-transform:lowercase;
 }
-.date-mark b{font-family:var(--sans);font-size:20px;font-weight:800;letter-spacing:-.04em;color:var(--tinta)}
-.date-mark small{margin-top:3px;font-size:7px;letter-spacing:.12em;color:var(--tinta-2)}
-.week[data-status="Planejada"] .date-mark{background:var(--plan-bg)}
-.week[data-status="Em curso"] .date-mark{background:var(--curso-bg)}
-.week[data-status="Concluída"] .date-mark{background:var(--feito-bg)}
-.week[data-status="Remarcada"] .date-mark{background:var(--remar-bg)}
-.week[data-status="Cancelada"] .date-mark{background:var(--canc-bg)}
-.week-title{font-family:var(--sans);font-size:14px;font-weight:700;letter-spacing:-.012em;color:var(--tinta)}
-.week-title.empty-title{font-size:13.5px;font-style:normal;font-weight:550;color:#9A9395}
-.week-sub{margin-top:8px;gap:8px}
-.micro{font-size:7.5px;letter-spacing:.11em;color:#928A8D}
-.now{padding:4px 7px;background:var(--vinho);font-size:7px}
-.chip{padding:4px 7px;font-size:7px;letter-spacing:.07em}
+.week[data-status="Planejada"] .w-date{color:var(--plan)}
+.week[data-status="Em curso"] .w-date{color:var(--curso)}
+.week[data-status="Concluída"] .w-date{color:var(--feito)}
+.week[data-status="Remarcada"] .w-date{color:var(--remar)}
+.week[data-status="Cancelada"] .w-date{color:var(--canc)}
+.week.current .w-date{font-weight:800;color:var(--vinho)}
+.w-titlewrap{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.w-title{font-family:var(--serif);font-size:16.5px;font-weight:600;color:var(--tinta);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.w-title.empty{font-style:italic;font-weight:400;color:#9A9395}
+.chip{padding:4px 7px;font-size:7px;letter-spacing:.07em;flex:0 0 auto}
 .week-meta{gap:16px}
 .week-save{font-size:8px}
 .chev{width:7px;height:7px;border-color:#8D8386}
@@ -661,8 +660,8 @@ body{
 .weeks-card .group-title .btn{margin-left:auto;background:#fff}
 
 .week-body{background:linear-gradient(180deg,#FDFCFC,#FAF9F9)}
-.week-inner{padding:0 24px 0 102px}
-.week.open .week-inner{padding:10px 24px 25px 102px}
+.week-inner{padding:0 24px}
+.week.open .week-inner{padding:8px 24px 25px}
 .entry{padding-top:5px}
 .field-label{margin-bottom:11px;color:#8C7F83;font-size:7.5px;letter-spacing:.16em}
 .fields{grid-template-columns:minmax(0,1fr) 150px;gap:10px}
@@ -709,8 +708,8 @@ body{
   .toolbar-spacer{display:none}
   .save-global{margin-left:auto}
   .weeks-card{border-radius:16px}
-  .week-head{grid-template-columns:58px minmax(0,1fr) auto;gap:11px;min-height:76px;padding:10px 12px 10px 10px}
-  .date-mark{padding:8px 4px;border-radius:11px}
+  .week-head{gap:10px;min-height:48px;padding:10px 14px}
+  .w-date{width:40px;font-size:10px}
   .week-inner,.week.open .week-inner{padding-left:16px;padding-right:16px}
   .week.open .week-inner{padding-top:12px}
   .fields{grid-template-columns:1fr}
@@ -721,8 +720,8 @@ body{
   .student-head h1{font-size:31px}
   .student-head{padding:22px 18px}
   .summary{grid-template-columns:1fr 1fr}
-  .week-title{font-size:13px}
-  .week-sub .micro:not(.now){display:none}
+  .w-title{font-size:14.5px}
+  .w-titlewrap .chip{display:none}
   .toolbar{margin-inline:0}
 }
 @media print{
@@ -1237,7 +1236,7 @@ function ensureWeek(student, monday){
   getEntries(student,key,monday);
   return key;
 }
-function weekSummaryHTML(student, key, article){
+function weekLineHTML(student, key, article){
   const data = state.dataByStudent.get(student) || {};
   const entry = (data[key] || [])[0] || {};
   const text = String(entry.foco || '').trim() || String(entry.atividade || '').trim();
@@ -1247,15 +1246,10 @@ function weekSummaryHTML(student, key, article){
     else delete article.dataset.status;
   }
   const title = text
-    ? '<div class="week-title">' + escapeHTML(text.length > 90 ? text.slice(0,90) + '…' : text) + '</div>'
-    : '<div class="week-title empty-title">Sem registro</div>';
-  const current = article?.dataset.current === '1';
-  return title +
-    '<div class="week-sub">' +
-      (current ? '<span class="micro now">Esta semana</span>' : '') +
-      '<span class="micro">Semana ' + escapeHTML(article?.dataset.number || key.split('-S')[1]) + '</span>' +
-      (text ? '<span class="chip" data-s="' + escapeHTML(status) + '">' + escapeHTML(status) + '</span>' : '') +
-    '</div>';
+    ? '<span class="w-title">' + escapeHTML(text.length > 90 ? text.slice(0,90) + '…' : text) + '</span>'
+    : '<span class="w-title empty">Sem registro</span>';
+  const chip = text ? '<span class="chip" data-s="' + escapeHTML(status) + '">' + escapeHTML(status) + '</span>' : '';
+  return title + chip;
 }
 function createWeek(monday, isCurrent){
   const student = state.student;
@@ -1274,8 +1268,8 @@ function createWeek(monday, isCurrent){
   head.title = weekLabel(monday);
   head.setAttribute('aria-expanded','false');
   head.innerHTML =
-    '<span class="date-mark"><b>' + monday.getDate() + '</b><small>' + MONTHS[monday.getMonth()].slice(0,3) + '</small></span>' +
-    '<span class="week-title-wrap">' + weekSummaryHTML(student,key,article) + '</span>' +
+    '<span class="w-date">' + monday.getDate() + ' ' + MONTHS[monday.getMonth()].slice(0,3) + '</span>' +
+    '<span class="w-titlewrap">' + weekLineHTML(student,key,article) + '</span>' +
     '<span class="week-meta"><span class="week-save"></span><span class="chev"></span></span>';
   head.addEventListener('click', () => toggleWeek(article));
   article.appendChild(head);
@@ -1498,8 +1492,8 @@ function deleteWeek(article){
   saveWeek(student,key,{force:true});
 }
 function refreshWeekHeader(article){
-  const wrap = article.querySelector('.week-title-wrap');
-  if (wrap) wrap.innerHTML = weekSummaryHTML(article.dataset.student,article.dataset.week,article);
+  const wrap = article.querySelector('.w-titlewrap');
+  if (wrap) wrap.innerHTML = weekLineHTML(article.dataset.student,article.dataset.week,article);
   updateSummary();
 }
 function updateSummary(){
