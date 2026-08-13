@@ -723,6 +723,23 @@ body{
   .metric,.week{box-shadow:none!important}
 }
 
+
+/* ═════ Registro salvo: exibição em texto, com editar/excluir ═════ */
+.entry-view{padding-top:4px;animation:viewIn .28s ease}
+@keyframes viewIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.view-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.view-date{font-size:10.5px;letter-spacing:.1em;color:var(--tinta-2)}
+.view-foco{font-family:var(--serif);font-size:22px;font-weight:600;color:var(--tinta);
+  line-height:1.28;margin-bottom:8px}
+.view-foco.vazio{font-style:italic;font-weight:400;color:var(--tinta-2);font-size:17px}
+.view-atividade{font-size:13.5px;line-height:1.75;color:var(--tinta);white-space:pre-wrap;
+  max-width:62ch}
+.view-obs{margin-top:10px;font-size:12px;font-style:italic;color:var(--tinta-2);
+  padding-left:14px;border-left:2px solid var(--linha)}
+.view-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;padding-top:17px;
+  border-top:1px solid var(--vinho-12)}
+.entry-edit{animation:editIn .24s ease}
+@keyframes editIn{from{opacity:0}to{opacity:1}}
 </style>
 </head>
 <body>
@@ -844,6 +861,7 @@ const state = {
   dirty: new Set(),
   inFlight: new Set(),
   saveQueues: new Map(),
+  editSnapshots: new Map(),
   recoveredDrafts: 0
 };
 
@@ -1293,54 +1311,160 @@ function toggleWeek(article){
     return;
   }
   state.openWeeks.add(key);
-  if (!article.querySelector('.entry')) mountWeekBody(article);
+  if (!article.dataset.mode) mountWeekBody(article);
   article.classList.add('open');
   head.setAttribute('aria-expanded','true');
+}
+function entryHasContent(entry){
+  return !!(String(entry?.foco || '').trim() || String(entry?.atividade || '').trim());
+}
+function formatEntryDate(value){
+  if (!value) return '';
+  const d = new Date(value + 'T00:00:00');
+  if (isNaN(d)) return value;
+  return 'Segunda, ' + d.getDate() + ' de ' + MONTHS[d.getMonth()];
 }
 function mountWeekBody(article){
   const student = article.dataset.student;
   const key = article.dataset.week;
   const monday = new Date(article.dataset.date + 'T00:00:00');
   const entries = getEntries(student,key,monday);
+  const entry = entries[0];
+  if (!article.dataset.mode) article.dataset.mode = entryHasContent(entry) ? 'view' : 'edit';
+  renderWeekBody(article);
+}
+function renderWeekBody(article){
   const inner = article.querySelector('.week-inner');
   inner.innerHTML = '';
+  inner.appendChild(article.dataset.mode === 'edit' ? buildEditForm(article) : buildViewCard(article));
+}
+function buildViewCard(article){
+  const student = article.dataset.student, key = article.dataset.week;
+  const data = state.dataByStudent.get(student) || {};
+  const entry = (data[key] || [])[0] || {};
+  const wrap = document.createElement('div');
+  wrap.className = 'entry-view';
 
-  entries.forEach((entry) => {
-    const div = document.createElement('div');
-    div.className = 'entry' + (entry.status === 'Cancelada' ? ' cancelled' : '');
-    div.innerHTML =
-      '<div class="field-label">Programação da semana</div>' +
-      '<div class="fields">' +
-        '<input type="date" data-field="data" aria-label="Data" value="' + escapeHTML(entry.data || '') + '">' +
-        '<input type="text" data-field="foco" aria-label="Foco da aula" placeholder="Foco da aula ou estrutura" value="' + escapeHTML(entry.foco || '') + '">' +
-        '<select data-field="status" aria-label="Status">' +
-          STATUS.map(s => '<option' + (s === entry.status ? ' selected' : '') + '>' + escapeHTML(s) + '</option>').join('') +
-        '</select>' +
-        '<textarea class="wide" data-field="atividade" aria-label="Conteúdo e tarefa" placeholder="Conteúdo, material e tarefa da semana">' + escapeHTML(entry.atividade || '') + '</textarea>' +
-        '<input class="wide" type="text" data-field="obs" aria-label="Observações" placeholder="Observações" value="' + escapeHTML(entry.obs || '') + '">' +
-      '</div>';
-    for (const field of div.querySelectorAll('[data-field]')){
-      const event = field.tagName === 'SELECT' ? 'change' : 'input';
-      field.addEventListener(event, () => {
-        entry[field.dataset.field] = field.value;
-        div.classList.toggle('cancelled', entry.status === 'Cancelada');
-        markDirty(article);
-        refreshWeekHeader(article);
-      });
-    }
-    inner.appendChild(div);
-  });
+  const status = entry.status || 'Planejada';
+  wrap.innerHTML =
+    '<div class="view-top">' +
+      '<span class="chip" data-s="' + escapeHTML(status) + '">' + escapeHTML(status) + '</span>' +
+      '<span class="view-date">' + escapeHTML(formatEntryDate(entry.data)) + '</span>' +
+    '</div>' +
+    (entry.foco
+      ? '<div class="view-foco">' + escapeHTML(entry.foco) + '</div>'
+      : '<div class="view-foco vazio">Sem foco registrado</div>') +
+    (entry.atividade ? '<div class="view-atividade">' + escapeHTML(entry.atividade) + '</div>' : '') +
+    (entry.obs ? '<div class="view-obs">' + escapeHTML(entry.obs) + '</div>' : '') +
+    '<div class="view-actions">' +
+      '<button class="btn primary" data-action="edit">Editar</button>' +
+      '<button class="btn danger" data-action="delete">Excluir</button>' +
+    '</div>';
+  wrap.querySelector('[data-action="edit"]').addEventListener('click', () => enterEditMode(article));
+  wrap.querySelector('[data-action="delete"]').addEventListener('click', () => deleteWeek(article));
+  return wrap;
+}
+function enterEditMode(article){
+  const student = article.dataset.student, key = article.dataset.week;
+  const data = state.dataByStudent.get(student) || {};
+  const entry = (data[key] || [])[0];
+  state.editSnapshots.set(recordKey(student,key), cloneEntries([entry])[0]);
+  article.dataset.mode = 'edit';
+  renderWeekBody(article);
+}
+function buildEditForm(article){
+  const student = article.dataset.student, key = article.dataset.week;
+  const monday = new Date(article.dataset.date + 'T00:00:00');
+  const entry = getEntries(student,key,monday)[0];
+  const wasSaved = state.editSnapshots.has(recordKey(student,key));
+
+  const wrap = document.createElement('div');
+  wrap.className = 'entry-edit';
+
+  const div = document.createElement('div');
+  div.className = 'entry' + (entry.status === 'Cancelada' ? ' cancelled' : '');
+  div.innerHTML =
+    '<div class="field-label">Programação da semana</div>' +
+    '<div class="fields">' +
+      '<input type="date" data-field="data" aria-label="Data" value="' + escapeHTML(entry.data || '') + '">' +
+      '<input type="text" data-field="foco" aria-label="Foco da aula" placeholder="Foco da aula ou estrutura" value="' + escapeHTML(entry.foco || '') + '">' +
+      '<select data-field="status" aria-label="Status">' +
+        STATUS.map(s => '<option' + (s === entry.status ? ' selected' : '') + '>' + escapeHTML(s) + '</option>').join('') +
+      '</select>' +
+      '<textarea class="wide" data-field="atividade" aria-label="Conteúdo e tarefa" placeholder="Conteúdo, material e tarefa da semana">' + escapeHTML(entry.atividade || '') + '</textarea>' +
+      '<input class="wide" type="text" data-field="obs" aria-label="Observações" placeholder="Observações" value="' + escapeHTML(entry.obs || '') + '">' +
+    '</div>';
+  for (const field of div.querySelectorAll('[data-field]')){
+    const event = field.tagName === 'SELECT' ? 'change' : 'input';
+    field.addEventListener(event, () => {
+      entry[field.dataset.field] = field.value;
+      div.classList.toggle('cancelled', entry.status === 'Cancelada');
+      markDirty(article);
+      refreshWeekHeader(article);
+    });
+  }
+  wrap.appendChild(div);
 
   const actions = document.createElement('div');
   actions.className = 'actions';
   actions.innerHTML =
     '<button class="btn" data-action="copy">Repetir semana anterior</button>' +
-    '<button class="btn danger" data-action="clear">Limpar semana</button>' +
-    '<button class="btn primary push" data-action="save">Salvar agora</button>';
+    (wasSaved ? '<button class="btn" data-action="cancel">Cancelar</button>' : '') +
+    '<button class="btn primary push" data-action="done">Concluir</button>';
   actions.querySelector('[data-action="copy"]').addEventListener('click',()=>copyPrevious(article));
-  actions.querySelector('[data-action="clear"]').addEventListener('click',()=>clearWeek(article));
-  actions.querySelector('[data-action="save"]').addEventListener('click',()=>saveWeek(student,key,{force:true}));
-  inner.appendChild(actions);
+  if (wasSaved) actions.querySelector('[data-action="cancel"]').addEventListener('click',()=>cancelEdit(article));
+  actions.querySelector('[data-action="done"]').addEventListener('click',()=>finishEdit(article));
+  wrap.appendChild(actions);
+  return wrap;
+}
+async function finishEdit(article){
+  const student = article.dataset.student, key = article.dataset.week;
+  const data = state.dataByStudent.get(student) || {};
+  const entry = (data[key] || [])[0];
+  if (!entryHasContent(entry)){
+    toast('Preencha ao menos o foco ou o conteúdo da semana antes de concluir.','error');
+    return;
+  }
+  try{
+    await saveWeek(student,key,{force:true});
+  }catch(_){
+    return; // o erro já foi avisado pelo saveWeek; permanece em edição para nova tentativa
+  }
+  state.editSnapshots.delete(recordKey(student,key));
+  article.dataset.mode = 'view';
+  renderWeekBody(article);
+  refreshWeekHeader(article);
+}
+function cancelEdit(article){
+  const student = article.dataset.student, key = article.dataset.week;
+  const rk = recordKey(student,key);
+  const snapshot = state.editSnapshots.get(rk);
+  if (snapshot){
+    const data = state.dataByStudent.get(student) || {};
+    data[key] = [cloneEntries([snapshot])[0]];
+    state.editSnapshots.delete(rk);
+  }
+  clearTimeout(state.timers.get(rk));
+  state.timers.delete(rk);
+  state.dirty.delete(rk);
+  removeDraftLocal(student,key);
+  updateGlobalSaveStatus();
+  article.dataset.mode = 'view';
+  renderWeekBody(article);
+  refreshWeekHeader(article);
+}
+function deleteWeek(article){
+  if (!confirm('Excluir o registro desta semana?')) return;
+  const student = article.dataset.student, key = article.dataset.week;
+  const monday = new Date(article.dataset.date+'T00:00:00');
+  const data = state.dataByStudent.get(student) || {};
+  data[key] = [{slot:1,data:iso(monday),foco:'',atividade:'',status:'Planejada',obs:''}];
+  state.editSnapshots.delete(recordKey(student,key));
+  article.dataset.mode = 'edit';
+  markDirty(article);
+  renderWeekBody(article);
+  refreshWeekHeader(article);
+  saveWeek(student,key,{force:true});
 }
 function refreshWeekHeader(article){
   const wrap = article.querySelector('.week-title-wrap');
@@ -1388,18 +1512,6 @@ function copyPrevious(article){
   markDirty(article);
   refreshWeekHeader(article);
 }
-function clearWeek(article){
-  if (!confirm('Apagar o registro desta semana?')) return;
-  const student = article.dataset.student;
-  const key = article.dataset.week;
-  const monday = new Date(article.dataset.date+'T00:00:00');
-  const data = state.dataByStudent.get(student) || {};
-  data[key] = [{slot:1,data:iso(monday),foco:'',atividade:'',status:'Planejada',obs:''}];
-  mountWeekBody(article);
-  markDirty(article);
-  refreshWeekHeader(article);
-}
-
 /* ========= AUTOSAVE SEGURO ========= */
 function bumpRevision(student,week){
   const k = recordKey(student,week);
