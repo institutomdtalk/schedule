@@ -642,11 +642,16 @@ body{
 .week[data-status="Remarcada"] .w-date{color:var(--remar)}
 .week[data-status="Cancelada"] .w-date{color:var(--canc)}
 .week.current .w-date{font-weight:800;color:var(--vinho)}
-.w-titlewrap{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.w-title{font-family:var(--serif);font-size:16.5px;font-weight:600;color:var(--tinta);
+.w-title{flex:1;min-width:0;font-family:var(--serif);font-size:16.5px;font-weight:600;color:var(--tinta);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .w-title.empty{font-style:italic;font-weight:400;color:#9A9395}
-.chip{padding:4px 7px;font-size:7px;letter-spacing:.07em;flex:0 0 auto}
+.w-actions{flex:0 0 auto;display:flex;align-items:center;gap:6px}
+.w-link{background:none;border:none;padding:2px 1px;cursor:pointer;
+  font-family:var(--sans);font-size:11.5px;color:var(--tinta-2);
+  border-bottom:1px dashed transparent;transition:color .15s,border-color .15s}
+.w-link:hover{color:var(--vinho);border-color:var(--vinho-18)}
+.w-link.w-danger:hover{color:var(--erro);border-color:rgba(168,69,47,.35)}
+.w-sep{color:var(--tinta-2);font-size:11px}
 .week-meta{gap:16px}
 .week-save{font-size:8px}
 .chev{width:7px;height:7px;border-color:#8D8386}
@@ -721,7 +726,6 @@ body{
   .student-head{padding:22px 18px}
   .summary{grid-template-columns:1fr 1fr}
   .w-title{font-size:14.5px}
-  .w-titlewrap .chip{display:none}
   .toolbar{margin-inline:0}
 }
 @media print{
@@ -731,6 +735,8 @@ body{
   .metric,.weeks-card{box-shadow:none!important}
   .weeks-card{border:1px solid #ddd!important}
   .week{break-inside:avoid;background:#fff!important}
+  .w-actions,.week-save{display:none!important}
+  .week-body{display:none!important}
 }
 
 
@@ -810,8 +816,6 @@ body{
             <option value="24">24 semanas à frente</option>
           </select>
           <button class="btn" id="todayBtn">Esta semana</button>
-          <button class="btn desktop-only" id="expandBtn">Abrir todas</button>
-          <button class="btn desktop-only" id="collapseBtn">Recolher</button>
           <button class="btn desktop-only" id="printBtn">Imprimir</button>
           <div class="toolbar-spacer"></div>
           <div class="save-global" id="saveGlobal" aria-live="polite">Tudo salvo</div>
@@ -867,7 +871,6 @@ const state = {
   students: [],
   student: null,
   dataByStudent: new Map(),
-  openWeeks: new Set(),
   horizon: 10,   // ajustado logo abaixo, se houver preferência guardada
   past: PAST_INITIAL,
   loadToken: 0,
@@ -1177,7 +1180,6 @@ async function selectStudent(student){
     return;
   }
   state.student = student;
-  state.openWeeks = new Set();
   state.past = PAST_INITIAL;
   state.recoveredDrafts = 0;
   store.set(LS_PREFIX+'student', student);
@@ -1236,20 +1238,39 @@ function ensureWeek(student, monday){
   getEntries(student,key,monday);
   return key;
 }
-function weekLineHTML(student, key, article){
+function entryHasContent(entry){
+  return !!(String(entry?.foco || '').trim() || String(entry?.atividade || '').trim());
+}
+function weekActionsHTML(hasContent){
+  return hasContent
+    ? '<button type="button" class="w-link" data-action="edit">editar</button>' +
+      '<span class="w-sep">,</span>' +
+      '<button type="button" class="w-link w-danger" data-action="delete">excluir</button>'
+    : '<button type="button" class="w-link" data-action="edit">adicionar</button>';
+}
+function wireLineActions(article){
+  const actionsEl = article.querySelector('.w-actions');
+  const editBtn = actionsEl.querySelector('[data-action="edit"]');
+  const delBtn = actionsEl.querySelector('[data-action="delete"]');
+  if (editBtn) editBtn.addEventListener('click', () => openEdit(article));
+  if (delBtn) delBtn.addEventListener('click', () => deleteWeek(article));
+}
+function renderWeekLine(article){
+  const student = article.dataset.student, key = article.dataset.week;
   const data = state.dataByStudent.get(student) || {};
   const entry = (data[key] || [])[0] || {};
+  const hasContent = entryHasContent(entry);
+  if (hasContent) article.dataset.status = entry.status || 'Planejada';
+  else delete article.dataset.status;
+
   const text = String(entry.foco || '').trim() || String(entry.atividade || '').trim();
-  const status = entry.status || 'Planejada';
-  if (article){
-    if (text) article.dataset.status = status;
-    else delete article.dataset.status;
-  }
-  const title = text
-    ? '<span class="w-title">' + escapeHTML(text.length > 90 ? text.slice(0,90) + '…' : text) + '</span>'
-    : '<span class="w-title empty">Sem registro</span>';
-  const chip = text ? '<span class="chip" data-s="' + escapeHTML(status) + '">' + escapeHTML(status) + '</span>' : '';
-  return title + chip;
+  const titleEl = article.querySelector('.w-title');
+  titleEl.textContent = hasContent ? (text.length > 90 ? text.slice(0,90) + '…' : text) : 'Sem registro';
+  titleEl.classList.toggle('empty', !hasContent);
+
+  const actionsEl = article.querySelector('.w-actions');
+  actionsEl.innerHTML = weekActionsHTML(hasContent);
+  wireLineActions(article);
 }
 function createWeek(monday, isCurrent){
   const student = state.student;
@@ -1262,28 +1283,22 @@ function createWeek(monday, isCurrent){
   article.dataset.number = key.split('-S')[1];
   article.dataset.current = isCurrent ? '1' : '0';
 
-  const head = document.createElement('button');
-  head.className = 'week-head';
-  head.type = 'button';
-  head.title = weekLabel(monday);
-  head.setAttribute('aria-expanded','false');
-  head.innerHTML =
-    '<span class="w-date">' + monday.getDate() + ' ' + MONTHS[monday.getMonth()].slice(0,3) + '</span>' +
-    '<span class="w-titlewrap">' + weekLineHTML(student,key,article) + '</span>' +
-    '<span class="week-meta"><span class="week-save"></span><span class="chev"></span></span>';
-  head.addEventListener('click', () => toggleWeek(article));
-  article.appendChild(head);
+  const line = document.createElement('div');
+  line.className = 'week-head';
+  line.title = weekLabel(monday);
+  line.innerHTML =
+    '<span class="w-date">' + monday.getDate() + ' ' + MONTHS[monday.getMonth()].slice(0,3) + '.</span>' +
+    '<span class="w-title"></span>' +
+    '<span class="week-save"></span>' +
+    '<span class="w-actions"></span>';
+  article.appendChild(line);
+  renderWeekLine(article);
 
   const body = document.createElement('div');
   body.className = 'week-body';
   body.innerHTML = '<div class="week-inner"></div>';
   article.appendChild(body);
 
-  if (state.openWeeks.has(key)){
-    article.classList.add('open');
-    head.setAttribute('aria-expanded','true');
-    mountWeekBody(article);
-  }
   refreshWeekSaveState(article);
   return article;
 }
@@ -1308,78 +1323,27 @@ function renderWeeks(){
   const allRows = document.querySelectorAll('.weeks-card .week');
   if (allRows.length) allRows[allRows.length - 1].classList.add('row-last');
 
-  if (!state.openWeeks.size){
-    const first = future.querySelector('.week');
-    if (first) toggleWeek(first);
-  }
   updateSummary();
   updateGlobalSaveStatus();
 }
-function toggleWeek(article){
-  const key = article.dataset.week;
-  const head = article.querySelector('.week-head');
-  if (article.classList.contains('open')){
-    article.classList.remove('open');
-    state.openWeeks.delete(key);
-    head.setAttribute('aria-expanded','false');
-    return;
-  }
-  state.openWeeks.add(key);
-  if (!article.dataset.mode) mountWeekBody(article);
-  article.classList.add('open');
-  head.setAttribute('aria-expanded','true');
-}
-function entryHasContent(entry){
-  return !!(String(entry?.foco || '').trim() || String(entry?.atividade || '').trim());
-}
-function formatEntryDate(value){
-  if (!value) return '';
-  const d = new Date(value + 'T00:00:00');
-  if (isNaN(d)) return value;
-  return 'Segunda, ' + d.getDate() + ' de ' + MONTHS[d.getMonth()];
-}
-function mountWeekBody(article){
-  const student = article.dataset.student;
-  const key = article.dataset.week;
-  const monday = new Date(article.dataset.date + 'T00:00:00');
-  const entries = getEntries(student,key,monday);
-  const entry = entries[0];
-  if (!article.dataset.mode) article.dataset.mode = entryHasContent(entry) ? 'view' : 'edit';
-  renderWeekBody(article);
-}
-function renderWeekBody(article){
+function mountEditForm(article){
   const inner = article.querySelector('.week-inner');
   inner.innerHTML = '';
-  inner.appendChild(article.dataset.mode === 'edit' ? buildEditForm(article) : buildViewCard(article));
+  inner.appendChild(buildEditForm(article));
 }
-function buildViewCard(article){
+function openEdit(article){
   const student = article.dataset.student, key = article.dataset.week;
-  const data = state.dataByStudent.get(student) || {};
-  const entry = (data[key] || [])[0] || {};
-  const wrap = document.createElement('div');
-  wrap.className = 'entry-view';
-
-  wrap.innerHTML =
-    (entry.foco
-      ? '<div class="view-foco">' + escapeHTML(entry.foco) + '</div>'
-      : '<div class="view-foco vazio">Sem foco registrado</div>') +
-    (entry.atividade ? '<div class="view-atividade">' + escapeHTML(entry.atividade) + '</div>' : '') +
-    (entry.obs ? '<div class="view-obs">' + escapeHTML(entry.obs) + '</div>' : '') +
-    '<div class="view-actions">' +
-      '<button class="btn primary" data-action="edit">Editar</button>' +
-      '<button class="btn danger" data-action="delete">Excluir</button>' +
-    '</div>';
-  wrap.querySelector('[data-action="edit"]').addEventListener('click', () => enterEditMode(article));
-  wrap.querySelector('[data-action="delete"]').addEventListener('click', () => deleteWeek(article));
-  return wrap;
+  const monday = new Date(article.dataset.date + 'T00:00:00');
+  const entry = getEntries(student,key,monday)[0];
+  if (entryHasContent(entry)) state.editSnapshots.set(recordKey(student,key), cloneEntries([entry])[0]);
+  else state.editSnapshots.delete(recordKey(student,key));
+  mountEditForm(article);
+  article.classList.add('open');
 }
-function enterEditMode(article){
-  const student = article.dataset.student, key = article.dataset.week;
-  const data = state.dataByStudent.get(student) || {};
-  const entry = (data[key] || [])[0];
-  state.editSnapshots.set(recordKey(student,key), cloneEntries([entry])[0]);
-  article.dataset.mode = 'edit';
-  renderWeekBody(article);
+function closeEdit(article){
+  article.classList.remove('open');
+  const inner = article.querySelector('.week-inner');
+  setTimeout(() => { if (!article.classList.contains('open')) inner.innerHTML = ''; }, 380);
 }
 function buildEditForm(article){
   const student = article.dataset.student, key = article.dataset.week;
@@ -1416,7 +1380,7 @@ function buildEditForm(article){
     input.addEventListener('input', () => {
       entry.obs = input.value;
       markDirty(article);
-      refreshWeekHeader(article);
+      renderWeekLine(article);
     });
   });
   for (const field of div.querySelectorAll('[data-field]')){
@@ -1425,7 +1389,7 @@ function buildEditForm(article){
       entry[field.dataset.field] = field.value;
       div.classList.toggle('cancelled', entry.status === 'Cancelada');
       markDirty(article);
-      refreshWeekHeader(article);
+      renderWeekLine(article);
     });
   }
   wrap.appendChild(div);
@@ -1456,27 +1420,28 @@ async function finishEdit(article){
     return; // o erro já foi avisado pelo saveWeek; permanece em edição para nova tentativa
   }
   state.editSnapshots.delete(recordKey(student,key));
-  article.dataset.mode = 'view';
-  renderWeekBody(article);
-  refreshWeekHeader(article);
+  closeEdit(article);
+  renderWeekLine(article);
 }
 function cancelEdit(article){
   const student = article.dataset.student, key = article.dataset.week;
   const rk = recordKey(student,key);
   const snapshot = state.editSnapshots.get(rk);
+  const data = state.dataByStudent.get(student) || {};
   if (snapshot){
-    const data = state.dataByStudent.get(student) || {};
     data[key] = [cloneEntries([snapshot])[0]];
-    state.editSnapshots.delete(rk);
+  } else {
+    const monday = new Date(article.dataset.date+'T00:00:00');
+    data[key] = [{slot:1,data:iso(monday),foco:'',atividade:'',status:'Planejada',obs:''}];
   }
+  state.editSnapshots.delete(rk);
   clearTimeout(state.timers.get(rk));
   state.timers.delete(rk);
   state.dirty.delete(rk);
   removeDraftLocal(student,key);
   updateGlobalSaveStatus();
-  article.dataset.mode = 'view';
-  renderWeekBody(article);
-  refreshWeekHeader(article);
+  closeEdit(article);
+  renderWeekLine(article);
 }
 function deleteWeek(article){
   if (!confirm('Excluir o registro desta semana?')) return;
@@ -1485,16 +1450,10 @@ function deleteWeek(article){
   const data = state.dataByStudent.get(student) || {};
   data[key] = [{slot:1,data:iso(monday),foco:'',atividade:'',status:'Planejada',obs:''}];
   state.editSnapshots.delete(recordKey(student,key));
-  article.dataset.mode = 'edit';
   markDirty(article);
-  renderWeekBody(article);
-  refreshWeekHeader(article);
+  if (article.classList.contains('open')) closeEdit(article);
+  renderWeekLine(article);
   saveWeek(student,key,{force:true});
-}
-function refreshWeekHeader(article){
-  const wrap = article.querySelector('.w-titlewrap');
-  if (wrap) wrap.innerHTML = weekLineHTML(article.dataset.student,article.dataset.week,article);
-  updateSummary();
 }
 function updateSummary(){
   if (!state.student) return;
@@ -1533,9 +1492,9 @@ function copyPrevious(article){
   target[0].atividade = source[0]?.atividade || '';
   target[0].obs = source[0]?.obs || '';
   target[0].status = 'Planejada';
-  mountWeekBody(article);
+  mountEditForm(article);
   markDirty(article);
-  refreshWeekHeader(article);
+  renderWeekLine(article);
 }
 /* ========= AUTOSAVE SEGURO ========= */
 function bumpRevision(student,week){
@@ -1642,7 +1601,6 @@ async function flushCurrentStudent(){
 function scrollToCurrentWeek(){
   const current = $('futureWeeks').querySelector('.week.current');
   if (!current) return;
-  if (!current.classList.contains('open')) toggleWeek(current);
   current.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function bindEvents(){
@@ -1661,12 +1619,6 @@ function bindEvents(){
     renderWeeks();
   });
   $('todayBtn').addEventListener('click',scrollToCurrentWeek);
-  $('expandBtn').addEventListener('click',()=>{
-    document.querySelectorAll('#futureWeeks .week').forEach(w=>{if(!w.classList.contains('open'))toggleWeek(w)});
-  });
-  $('collapseBtn').addEventListener('click',()=>{
-    document.querySelectorAll('.week.open').forEach(w=>toggleWeek(w));
-  });
   $('printBtn').addEventListener('click',()=>window.print());
   $('morePastBtn').addEventListener('click',()=>{state.past+=8;renderWeeks()});
   window.addEventListener('online',()=>{setNetwork('ok','Online'); if(state.dirty.size) flushCurrentStudent()});
@@ -1678,7 +1630,11 @@ function bindEvents(){
       if (weekEl) saveWeek(weekEl.dataset.student,weekEl.dataset.week,{force:true});
       else flushCurrentStudent();
     }
-    if (ev.key==='Escape') closeSidebar();
+    if (ev.key==='Escape'){
+      const open = document.querySelector('.week.open');
+      if (open) cancelEdit(open);
+      else closeSidebar();
+    }
   });
   window.addEventListener('beforeunload',(ev)=>{
     if (hasPending()){
