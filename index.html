@@ -665,7 +665,7 @@ body{
 .week.open .week-inner{padding:10px 24px 25px 102px}
 .entry{padding-top:5px}
 .field-label{margin-bottom:11px;color:#8C7F83;font-size:7.5px;letter-spacing:.16em}
-.fields{grid-template-columns:150px minmax(0,1fr) 160px;gap:10px}
+.fields{grid-template-columns:minmax(0,1fr) 150px;gap:10px}
 .fields input,.fields select,.fields textarea{
   min-height:44px;
   border:1px solid rgba(23,19,21,.09);
@@ -738,8 +738,6 @@ body{
 /* ═════ Registro salvo: exibição em texto, com editar/excluir ═════ */
 .entry-view{padding-top:4px;animation:viewIn .28s ease}
 @keyframes viewIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.view-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.view-date{font-size:10.5px;letter-spacing:.1em;color:var(--tinta-2)}
 .view-foco{font-family:var(--serif);font-size:22px;font-weight:600;color:var(--tinta);
   line-height:1.28;margin-bottom:8px}
 .view-foco.vazio{font-style:italic;font-weight:400;color:var(--tinta-2);font-size:17px}
@@ -1362,12 +1360,7 @@ function buildViewCard(article){
   const wrap = document.createElement('div');
   wrap.className = 'entry-view';
 
-  const status = entry.status || 'Planejada';
   wrap.innerHTML =
-    '<div class="view-top">' +
-      '<span class="chip" data-s="' + escapeHTML(status) + '">' + escapeHTML(status) + '</span>' +
-      '<span class="view-date">' + escapeHTML(formatEntryDate(entry.data)) + '</span>' +
-    '</div>' +
     (entry.foco
       ? '<div class="view-foco">' + escapeHTML(entry.foco) + '</div>'
       : '<div class="view-foco vazio">Sem foco registrado</div>') +
@@ -1403,13 +1396,12 @@ function buildEditForm(article){
   div.innerHTML =
     '<div class="field-label">Programação da semana</div>' +
     '<div class="fields">' +
-      '<input type="date" data-field="data" aria-label="Data" value="' + escapeHTML(entry.data || '') + '">' +
       '<input type="text" data-field="foco" aria-label="Foco da aula" placeholder="Foco da aula ou estrutura" value="' + escapeHTML(entry.foco || '') + '">' +
       '<select data-field="status" aria-label="Status">' +
         STATUS.map(s => '<option' + (s === entry.status ? ' selected' : '') + '>' + escapeHTML(s) + '</option>').join('') +
       '</select>' +
       '<textarea class="wide" data-field="atividade" aria-label="Conteúdo e tarefa" placeholder="Conteúdo, material e tarefa da semana">' + escapeHTML(entry.atividade || '') + '</textarea>' +
-      '<input class="wide" type="text" data-field="obs" aria-label="Observações" placeholder="Observações" value="' + escapeHTML(entry.obs || '') + '">' +
+      '<input class="wide" type="text" data-field="obs" aria-label="Observações" placeholder="Observações (opcional)" value="' + escapeHTML(entry.obs || '') + '">' +
     '</div>';
   for (const field of div.querySelectorAll('[data-field]')){
     const event = field.tagName === 'SELECT' ? 'change' : 'input';
