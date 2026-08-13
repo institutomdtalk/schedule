@@ -8,7 +8,7 @@
 <title>Cronogramas Semanais · Instituto MD Talk</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --vinho:#6E1F2E;
@@ -339,6 +339,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
   --sombra:0 1px 2px rgba(22,14,17,.03),0 12px 34px rgba(34,19,24,.055);
   --sombra-hover:0 2px 4px rgba(22,14,17,.035),0 18px 46px rgba(34,19,24,.085);
   --serif:'DM Serif Display',Georgia,serif;
+  --serif-fine:'Cormorant Garamond',Georgia,serif;
   --sans:'Manrope',system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
 }
 
@@ -611,29 +612,35 @@ body{
 .timeline::before{display:none}
 .week{
   border-bottom:1px solid var(--linha);
-  transition:background .18s ease;
+  border-left:3px solid transparent;
+  transition:background .18s ease,border-color .18s ease;
   overflow:hidden;
 }
 .week::after{display:none}
 .week.row-last{border-bottom:none}
 .week:hover{background:#FBFAFA}
 .week.open{background:#FDFCFC}
+.week[data-status="Planejada"]{border-left-color:var(--plan)}
+.week[data-status="Em curso"]{border-left-color:var(--curso)}
+.week[data-status="Concluída"]{border-left-color:var(--feito)}
+.week[data-status="Remarcada"]{border-left-color:var(--remar)}
+.week[data-status="Cancelada"]{border-left-color:var(--canc)}
 .week.current{
-  box-shadow:inset 4px 0 0 var(--vinho);
-  background:linear-gradient(90deg,rgba(116,31,51,.035),transparent 55%);
+  border-left-color:var(--vinho);border-left-width:4px;
+  background:linear-gradient(90deg,rgba(116,31,51,.04),transparent 55%);
 }
-.week.current:hover,.week.current.open{background:linear-gradient(90deg,rgba(116,31,51,.05),transparent 55%)}
+.week.current:hover,.week.current.open{background:linear-gradient(90deg,rgba(116,31,51,.06),transparent 55%)}
 .week-head{
   display:flex;align-items:center;
-  min-height:52px;
-  gap:14px;
-  padding:12px 20px;
+  min-height:54px;
+  gap:16px;
+  padding:11px 22px 11px 19px;
   border-radius:0;
 }
 .week-head:hover{background:#FCFBFB}
 .w-date{
-  flex:0 0 auto;width:56px;
-  font-family:var(--sans);font-size:11.5px;font-weight:700;letter-spacing:.02em;
+  flex:0 0 auto;width:54px;
+  font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:.03em;
   color:var(--tinta-2);text-transform:lowercase;
 }
 .week[data-status="Planejada"] .w-date{color:var(--plan)}
@@ -641,17 +648,19 @@ body{
 .week[data-status="Concluída"] .w-date{color:var(--feito)}
 .week[data-status="Remarcada"] .w-date{color:var(--remar)}
 .week[data-status="Cancelada"] .w-date{color:var(--canc)}
-.week.current .w-date{font-weight:800;color:var(--vinho)}
-.w-title{flex:1;min-width:0;font-family:var(--serif);font-size:16.5px;font-weight:600;color:var(--tinta);
+.week.current .w-date{font-weight:700;color:var(--vinho)}
+.w-title{flex:1;min-width:0;font-family:var(--serif-fine);font-size:18px;font-weight:500;
+  letter-spacing:0;color:var(--tinta);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.w-title.empty{font-style:italic;font-weight:400;color:#9A9395}
-.w-actions{flex:0 0 auto;display:flex;align-items:center;gap:6px}
+.w-title.empty{font-style:italic;font-weight:400;color:#ACA5A8}
+.w-actions{flex:0 0 auto;display:flex;align-items:center;gap:7px}
 .w-link{background:none;border:none;padding:2px 1px;cursor:pointer;
-  font-family:var(--sans);font-size:11.5px;color:var(--tinta-2);
-  border-bottom:1px dashed transparent;transition:color .15s,border-color .15s}
+  font-family:var(--serif-fine);font-style:italic;font-size:14px;font-weight:500;
+  color:var(--tinta-2);
+  border-bottom:1px solid transparent;transition:color .15s,border-color .15s}
 .w-link:hover{color:var(--vinho);border-color:var(--vinho-18)}
-.w-link.w-danger:hover{color:var(--erro);border-color:rgba(168,69,47,.35)}
-.w-sep{color:var(--tinta-2);font-size:11px}
+.w-link.w-danger:hover{color:var(--erro);border-color:rgba(168,69,47,.32)}
+.w-sep{color:#C7C0C3;font-size:12px;position:relative;top:-1px}
 .week-meta{gap:16px}
 .week-save{font-size:8px}
 .chev{width:7px;height:7px;border-color:#8D8386}
@@ -1244,7 +1253,7 @@ function entryHasContent(entry){
 function weekActionsHTML(hasContent){
   return hasContent
     ? '<button type="button" class="w-link" data-action="edit">editar</button>' +
-      '<span class="w-sep">,</span>' +
+      '<span class="w-sep">·</span>' +
       '<button type="button" class="w-link w-danger" data-action="delete">excluir</button>'
     : '<button type="button" class="w-link" data-action="edit">adicionar</button>';
 }
