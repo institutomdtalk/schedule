@@ -439,40 +439,50 @@ body{
   font-size:12.5px;
 }
 .search:focus{box-shadow:0 0 0 4px var(--vinho-08);border-color:rgba(116,31,51,.35)}
-.student-list li{margin:4px 0}
+.student-list li{margin:0 0 10px}
 .student{
-  min-height:48px;
-  padding:7px 10px;
-  gap:12px;
-  border-radius:14px;
-  border:1px solid transparent;
+  min-height:66px;
+  padding:11px 14px;
+  gap:13px;
+  border-radius:16px;
+  border:1px solid var(--linha);
+  background:#fff;
+  box-shadow:0 1px 2px rgba(20,14,16,.03);
+  transition:border-color .18s,box-shadow .18s,transform .18s,background .18s;
 }
 .student:hover{
   background:#fff;
-  border-color:var(--linha);
-  transform:none;
-  box-shadow:0 5px 16px rgba(30,17,21,.04);
+  border-color:rgba(116,31,51,.2);
+  transform:translateY(-1px);
+  box-shadow:0 10px 24px rgba(30,17,21,.075);
 }
 .student.active{
   position:relative;
-  background:#fff;
-  border-color:rgba(116,31,51,.13);
-  box-shadow:0 7px 22px rgba(70,16,30,.075);
+  background:linear-gradient(135deg,var(--blush),#fff 62%);
+  border-color:rgba(116,31,51,.32);
+  box-shadow:0 12px 28px rgba(70,16,30,.14);
 }
 .student.active::before{
-  content:"";position:absolute;left:-1px;top:10px;bottom:10px;width:3px;
+  content:"";position:absolute;left:-1px;top:12px;bottom:12px;width:3px;
   border-radius:0 6px 6px 0;background:var(--vinho);
 }
 .avatar{
-  width:35px;height:35px;flex-basis:35px;border-radius:50%;
-  font-size:9.5px;font-weight:800;
+  width:42px;height:42px;flex-basis:42px;border-radius:13px;
+  font-size:11px;font-weight:800;
   background:#F0E9EB;color:var(--vinho);
 }
 .student.active .avatar{
   background:linear-gradient(145deg,var(--vinho),var(--vinho-3));
   box-shadow:0 5px 14px rgba(116,31,51,.22);
+  border-radius:14px;
 }
-.student-name{font-size:12.5px;font-weight:650;letter-spacing:-.01em}
+.student-name{font-size:13.5px;font-weight:700;letter-spacing:-.01em;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.student-arrow{
+  flex:0 0 auto;font-size:13px;color:var(--vinho);opacity:0;
+  transform:translateX(-4px);transition:opacity .18s,transform .18s;
+}
+.student:hover .student-arrow,.student.active .student-arrow{opacity:1;transform:none}
 
 /* MAIN CONTENT */
 .main{max-width:1540px;width:100%;padding:42px clamp(28px,4.4vw,72px) 110px}
@@ -628,8 +638,8 @@ body{
 .week-head{
   display:flex;align-items:center;
   min-height:54px;
-  gap:16px;
-  padding:11px 22px 11px 19px;
+  gap:10px;
+  padding:9px 20px 9px 19px;
   border-radius:0;
 }
 .week-head:hover{background:#FCFBFB}
@@ -644,18 +654,47 @@ body{
 .week[data-status="Remarcada"] .w-date{color:var(--remar)}
 .week[data-status="Cancelada"] .w-date{color:var(--canc)}
 .week.current .w-date{font-weight:700;color:var(--vinho)}
-.w-title{flex:1;min-width:0;font-family:var(--serif-fine);font-size:18px;font-weight:500;
-  letter-spacing:0;color:var(--tinta);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.w-title.empty{font-style:italic;font-weight:400;color:#ACA5A8}
-.w-actions{flex:0 0 auto;display:flex;align-items:center;gap:7px}
+
+.w-foco{
+  flex:1;min-width:0;width:100%;
+  font-family:var(--serif-fine);font-size:18px;font-weight:500;color:var(--tinta);
+  background:none;border:none;border-radius:6px;
+  padding:5px 8px;margin:0 -8px;
+  transition:background .15s,box-shadow .15s;
+}
+.w-foco::placeholder{font-style:italic;font-weight:400;color:#ACA5A8}
+.w-foco:hover{background:rgba(23,19,21,.025)}
+.w-foco:focus{background:#fff;box-shadow:0 0 0 1.5px var(--vinho-18);outline:none}
+
+.w-status{
+  flex:0 0 auto;width:130px;
+  font-family:var(--sans);font-size:10.5px;font-weight:700;letter-spacing:.03em;
+  color:var(--tinta-2);background:none;border:1px solid transparent;border-radius:7px;
+  padding:6px 8px;cursor:pointer;transition:background .15s,border-color .15s;
+}
+.w-status:hover{border-color:var(--linha)}
+.w-status:focus{outline:none;border-color:var(--vinho-18)}
+.w-status[data-value="Planejada"]{color:var(--plan);background:var(--plan-bg)}
+.w-status[data-value="Em curso"]{color:var(--curso);background:var(--curso-bg)}
+.w-status[data-value="Concluída"]{color:var(--feito);background:var(--feito-bg)}
+.w-status[data-value="Remarcada"]{color:var(--remar);background:var(--remar-bg)}
+.w-status[data-value="Cancelada"]{color:var(--canc);background:var(--canc-bg)}
+
+.w-more{
+  flex:0 0 auto;width:24px;height:24px;border-radius:7px;
+  border:1px solid var(--linha);background:#fff;color:var(--tinta-2);
+  font-size:13px;line-height:1;cursor:pointer;display:grid;place-items:center;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.w-more:hover{color:var(--vinho);border-color:var(--vinho-18);background:var(--vinho-08)}
+.week.open .w-more{color:var(--vinho);border-color:var(--vinho-18);background:var(--vinho-08)}
+
 .w-link{background:none;border:none;padding:2px 1px;cursor:pointer;
   font-family:var(--sans);font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
   color:var(--tinta-2);
   border-bottom:1px solid transparent;transition:color .15s,border-color .15s}
 .w-link:hover{color:var(--vinho);border-color:var(--vinho-18)}
 .w-link.w-danger:hover{color:var(--erro);border-color:rgba(168,69,47,.32)}
-.w-sep{color:#C7C0C3;font-size:10px}
 .week-meta{gap:16px}
 .week-save{font-size:8px}
 .chev{width:7px;height:7px;border-color:#8D8386}
@@ -717,8 +756,11 @@ body{
   .toolbar-spacer{display:none}
   .save-global{margin-left:auto}
   .weeks-card{border-radius:16px}
-  .week-head{gap:10px;min-height:48px;padding:10px 14px}
-  .w-date{width:40px;font-size:10px}
+  .week-head{gap:8px;min-height:48px;padding:10px 14px}
+  .w-date{width:38px;font-size:10px}
+  .w-foco{font-size:15px;margin:0 -6px}
+  .w-status{width:96px;font-size:9px;padding:6px 5px}
+  .week-save{display:none}
   .week-inner,.week.open .week-inner{padding-left:16px;padding-right:16px}
   .week.open .week-inner{padding-top:12px}
   .fields{grid-template-columns:1fr}
@@ -729,7 +771,8 @@ body{
   .student-head h1{font-size:31px}
   .student-head{padding:22px 18px}
   .summary{grid-template-columns:1fr 1fr}
-  .w-title{font-size:14.5px}
+  .w-foco{font-size:13.5px}
+  .w-status{width:70px;font-size:8px;padding:5px 3px}
   .toolbar{margin-inline:0}
 }
 @media print{
@@ -883,7 +926,6 @@ const state = {
   dirty: new Set(),
   inFlight: new Set(),
   saveQueues: new Map(),
-  editSnapshots: new Map(),
   recoveredDrafts: 0
 };
 
@@ -1138,7 +1180,7 @@ function renderStudents(){
     const btn = document.createElement('button');
     btn.className = 'student' + (name === state.student ? ' active' : '');
     btn.type = 'button';
-    btn.innerHTML = '<span class="avatar">' + escapeHTML(initials(name)) + '</span><span class="student-name" title="' + escapeHTML(name) + '">' + escapeHTML(name) + '</span>';
+    btn.innerHTML = '<span class="avatar">' + escapeHTML(initials(name)) + '</span><span class="student-name" title="' + escapeHTML(name) + '">' + escapeHTML(name) + '</span><span class="student-arrow" aria-hidden="true">→</span>';
     btn.addEventListener('click', () => selectStudent(name));
     li.appendChild(btn);
     frag.appendChild(li);
@@ -1245,40 +1287,86 @@ function ensureWeek(student, monday){
 function entryHasContent(entry){
   return !!(String(entry?.foco || '').trim() || String(entry?.atividade || '').trim());
 }
-function weekActionsHTML(hasContent){
-  return hasContent
-    ? '<button type="button" class="w-link" data-action="edit">editar</button>' +
-      '<span class="w-sep">·</span>' +
-      '<button type="button" class="w-link w-danger" data-action="delete">excluir</button>'
-    : '<button type="button" class="w-link" data-action="edit">adicionar</button>';
-}
-function wireLineActions(article){
-  const actionsEl = article.querySelector('.w-actions');
-  const editBtn = actionsEl.querySelector('[data-action="edit"]');
-  const delBtn = actionsEl.querySelector('[data-action="delete"]');
-  if (editBtn) editBtn.addEventListener('click', () => openEdit(article));
-  if (delBtn) delBtn.addEventListener('click', () => deleteWeek(article));
-}
-function renderWeekLine(article){
-  const student = article.dataset.student, key = article.dataset.week;
-  const data = state.dataByStudent.get(student) || {};
-  const entry = (data[key] || [])[0] || {};
-  const hasContent = entryHasContent(entry);
-  if (hasContent) article.dataset.status = entry.status || 'Planejada';
+function refreshDateStatus(article, entry){
+  if (entryHasContent(entry)) article.dataset.status = entry.status || 'Planejada';
   else delete article.dataset.status;
+}
+function wireWeekRow(article, entry){
+  const line = article.querySelector('.week-head');
+  const focoEl = line.querySelector('[data-field="foco"]');
+  const statusEl = line.querySelector('[data-field="status"]');
+  focoEl.addEventListener('input', () => {
+    entry.foco = focoEl.value;
+    refreshDateStatus(article, entry);
+    markDirty(article);
+  });
+  statusEl.addEventListener('change', () => {
+    entry.status = statusEl.value;
+    statusEl.dataset.value = entry.status;
+    refreshDateStatus(article, entry);
+    markDirty(article);
+  });
+  line.querySelector('[data-action="more"]').addEventListener('click', () => toggleDetails(article));
+  line.querySelector('[data-action="delete"]').addEventListener('click', () => deleteWeek(article));
+}
+function toggleDetails(article){
+  const btn = article.querySelector('[data-action="more"]');
+  if (article.classList.contains('open')){
+    article.classList.remove('open');
+    btn.textContent = '+';
+    btn.setAttribute('aria-expanded','false');
+    return;
+  }
+  mountDetails(article);
+  article.classList.add('open');
+  btn.textContent = '–';
+  btn.setAttribute('aria-expanded','true');
+}
+function mountDetails(article){
+  const inner = article.querySelector('.week-inner');
+  if (inner.dataset.mounted === '1') return;
+  inner.dataset.mounted = '1';
+  const student = article.dataset.student, key = article.dataset.week;
+  const monday = new Date(article.dataset.date + 'T00:00:00');
+  const entry = getEntries(student,key,monday)[0];
 
-  const text = String(entry.foco || '').trim() || String(entry.atividade || '').trim();
-  const titleEl = article.querySelector('.w-title');
-  titleEl.textContent = hasContent ? (text.length > 90 ? text.slice(0,90) + '…' : text) : 'Sem registro';
-  titleEl.classList.toggle('empty', !hasContent);
-
-  const actionsEl = article.querySelector('.w-actions');
-  actionsEl.innerHTML = weekActionsHTML(hasContent);
-  wireLineActions(article);
+  const wrap = document.createElement('div');
+  wrap.className = 'entry-edit';
+  wrap.innerHTML =
+    '<div class="fields">' +
+      '<textarea class="wide" data-field="atividade" aria-label="Conteúdo e tarefa" placeholder="Conteúdo, material e tarefa da semana">' + escapeHTML(entry.atividade || '') + '</textarea>' +
+      '<input class="wide" type="text" data-field="obs" aria-label="Observações" placeholder="Observações (opcional)" value="' + escapeHTML(entry.obs || '') + '">' +
+    '</div>' +
+    '<div class="actions"><button type="button" class="btn" data-action="copy">Repetir semana anterior</button></div>';
+  wrap.querySelectorAll('[data-field]').forEach(field => {
+    field.addEventListener('input', () => {
+      entry[field.dataset.field] = field.value;
+      markDirty(article);
+    });
+  });
+  wrap.querySelector('[data-action="copy"]').addEventListener('click', () => copyPrevious(article));
+  inner.appendChild(wrap);
+}
+function refreshRowValues(article, entry){
+  const line = article.querySelector('.week-head');
+  line.querySelector('[data-field="foco"]').value = entry.foco || '';
+  const statusEl = line.querySelector('[data-field="status"]');
+  statusEl.value = entry.status || 'Planejada';
+  statusEl.dataset.value = entry.status || 'Planejada';
+  refreshDateStatus(article, entry);
+  const inner = article.querySelector('.week-inner');
+  if (inner.dataset.mounted === '1'){
+    const at = inner.querySelector('[data-field="atividade"]');
+    const obs = inner.querySelector('[data-field="obs"]');
+    if (at) at.value = entry.atividade || '';
+    if (obs) obs.value = entry.obs || '';
+  }
 }
 function createWeek(monday, isCurrent){
   const student = state.student;
   const key = ensureWeek(student,monday);
+  const entry = getEntries(student,key,monday)[0];
+
   const article = document.createElement('article');
   article.className = 'week' + (isCurrent ? ' current' : '');
   article.dataset.week = key;
@@ -1286,23 +1374,28 @@ function createWeek(monday, isCurrent){
   article.dataset.date = iso(monday);
   article.dataset.number = key.split('-S')[1];
   article.dataset.current = isCurrent ? '1' : '0';
+  refreshDateStatus(article, entry);
 
   const line = document.createElement('div');
   line.className = 'week-head';
   line.title = weekLabel(monday);
   line.innerHTML =
     '<span class="w-date">' + monday.getDate() + ' ' + MONTHS[monday.getMonth()].slice(0,3) + '.</span>' +
-    '<span class="w-title"></span>' +
+    '<input class="w-foco" type="text" data-field="foco" aria-label="Foco da semana" placeholder="Foco da semana" value="' + escapeHTML(entry.foco || '') + '">' +
+    '<select class="w-status" data-field="status" data-value="' + escapeHTML(entry.status || 'Planejada') + '" aria-label="Status">' +
+      STATUS.map(s => '<option' + (s === entry.status ? ' selected' : '') + '>' + escapeHTML(s) + '</option>').join('') +
+    '</select>' +
     '<span class="week-save"></span>' +
-    '<span class="w-actions"></span>';
+    '<button type="button" class="w-more" data-action="more" aria-expanded="false" title="Conteúdo e observações">+</button>' +
+    '<button type="button" class="w-link w-danger" data-action="delete">excluir</button>';
   article.appendChild(line);
-  renderWeekLine(article);
 
   const body = document.createElement('div');
   body.className = 'week-body';
   body.innerHTML = '<div class="week-inner"></div>';
   article.appendChild(body);
 
+  wireWeekRow(article, entry);
   refreshWeekSaveState(article);
   return article;
 }
@@ -1330,133 +1423,15 @@ function renderWeeks(){
   updateSummary();
   updateGlobalSaveStatus();
 }
-function mountEditForm(article){
-  const inner = article.querySelector('.week-inner');
-  inner.innerHTML = '';
-  inner.appendChild(buildEditForm(article));
-}
-function openEdit(article){
-  const student = article.dataset.student, key = article.dataset.week;
-  const monday = new Date(article.dataset.date + 'T00:00:00');
-  const entry = getEntries(student,key,monday)[0];
-  if (entryHasContent(entry)) state.editSnapshots.set(recordKey(student,key), cloneEntries([entry])[0]);
-  else state.editSnapshots.delete(recordKey(student,key));
-  mountEditForm(article);
-  article.classList.add('open');
-}
-function closeEdit(article){
-  article.classList.remove('open');
-  const inner = article.querySelector('.week-inner');
-  setTimeout(() => { if (!article.classList.contains('open')) inner.innerHTML = ''; }, 380);
-}
-function buildEditForm(article){
-  const student = article.dataset.student, key = article.dataset.week;
-  const monday = new Date(article.dataset.date + 'T00:00:00');
-  const entry = getEntries(student,key,monday)[0];
-  const wasSaved = state.editSnapshots.has(recordKey(student,key));
-
-  const wrap = document.createElement('div');
-  wrap.className = 'entry-edit';
-
-  const div = document.createElement('div');
-  div.className = 'entry' + (entry.status === 'Cancelada' ? ' cancelled' : '');
-  div.innerHTML =
-    '<div class="fields">' +
-      '<input type="text" data-field="foco" aria-label="Foco da aula" placeholder="Foco da aula ou estrutura" value="' + escapeHTML(entry.foco || '') + '">' +
-      '<select data-field="status" aria-label="Status">' +
-        STATUS.map(s => '<option' + (s === entry.status ? ' selected' : '') + '>' + escapeHTML(s) + '</option>').join('') +
-      '</select>' +
-      '<textarea class="wide" data-field="atividade" aria-label="Conteúdo e tarefa" placeholder="Conteúdo, material e tarefa da semana">' + escapeHTML(entry.atividade || '') + '</textarea>' +
-      (entry.obs
-        ? '<input class="wide" type="text" data-field="obs" aria-label="Observações" placeholder="Observações (opcional)" value="' + escapeHTML(entry.obs) + '">'
-        : '<button type="button" class="obs-toggle wide" data-action="add-obs">+ Observação</button>') +
-    '</div>';
-  const obsToggle = div.querySelector('[data-action="add-obs"]');
-  if (obsToggle) obsToggle.addEventListener('click', () => {
-    const input = document.createElement('input');
-    input.className = 'wide';
-    input.type = 'text';
-    input.dataset.field = 'obs';
-    input.setAttribute('aria-label','Observações');
-    input.placeholder = 'Observações (opcional)';
-    obsToggle.replaceWith(input);
-    input.focus();
-    input.addEventListener('input', () => {
-      entry.obs = input.value;
-      markDirty(article);
-      renderWeekLine(article);
-    });
-  });
-  for (const field of div.querySelectorAll('[data-field]')){
-    const event = field.tagName === 'SELECT' ? 'change' : 'input';
-    field.addEventListener(event, () => {
-      entry[field.dataset.field] = field.value;
-      div.classList.toggle('cancelled', entry.status === 'Cancelada');
-      markDirty(article);
-      renderWeekLine(article);
-    });
-  }
-  wrap.appendChild(div);
-
-  const actions = document.createElement('div');
-  actions.className = 'actions';
-  actions.innerHTML =
-    '<button class="btn" data-action="copy">Repetir semana anterior</button>' +
-    (wasSaved ? '<button class="btn" data-action="cancel">Cancelar</button>' : '') +
-    '<button class="btn primary push" data-action="done">Concluir</button>';
-  actions.querySelector('[data-action="copy"]').addEventListener('click',()=>copyPrevious(article));
-  if (wasSaved) actions.querySelector('[data-action="cancel"]').addEventListener('click',()=>cancelEdit(article));
-  actions.querySelector('[data-action="done"]').addEventListener('click',()=>finishEdit(article));
-  wrap.appendChild(actions);
-  return wrap;
-}
-async function finishEdit(article){
-  const student = article.dataset.student, key = article.dataset.week;
-  const data = state.dataByStudent.get(student) || {};
-  const entry = (data[key] || [])[0];
-  if (!entryHasContent(entry)){
-    toast('Preencha ao menos o foco ou o conteúdo da semana antes de concluir.','error');
-    return;
-  }
-  try{
-    await saveWeek(student,key,{force:true});
-  }catch(_){
-    return; // o erro já foi avisado pelo saveWeek; permanece em edição para nova tentativa
-  }
-  state.editSnapshots.delete(recordKey(student,key));
-  closeEdit(article);
-  renderWeekLine(article);
-}
-function cancelEdit(article){
-  const student = article.dataset.student, key = article.dataset.week;
-  const rk = recordKey(student,key);
-  const snapshot = state.editSnapshots.get(rk);
-  const data = state.dataByStudent.get(student) || {};
-  if (snapshot){
-    data[key] = [cloneEntries([snapshot])[0]];
-  } else {
-    const monday = new Date(article.dataset.date+'T00:00:00');
-    data[key] = [{slot:1,data:iso(monday),foco:'',atividade:'',status:'Planejada',obs:''}];
-  }
-  state.editSnapshots.delete(rk);
-  clearTimeout(state.timers.get(rk));
-  state.timers.delete(rk);
-  state.dirty.delete(rk);
-  removeDraftLocal(student,key);
-  updateGlobalSaveStatus();
-  closeEdit(article);
-  renderWeekLine(article);
-}
 function deleteWeek(article){
   if (!confirm('Excluir o registro desta semana?')) return;
   const student = article.dataset.student, key = article.dataset.week;
   const monday = new Date(article.dataset.date+'T00:00:00');
   const data = state.dataByStudent.get(student) || {};
-  data[key] = [{slot:1,data:iso(monday),foco:'',atividade:'',status:'Planejada',obs:''}];
-  state.editSnapshots.delete(recordKey(student,key));
+  const entry = {slot:1,data:iso(monday),foco:'',atividade:'',status:'Planejada',obs:''};
+  data[key] = [entry];
+  refreshRowValues(article, entry);
   markDirty(article);
-  if (article.classList.contains('open')) closeEdit(article);
-  renderWeekLine(article);
   saveWeek(student,key,{force:true});
 }
 function updateSummary(){
@@ -1491,14 +1466,13 @@ function copyPrevious(article){
     toast('A semana anterior está vazia.','error');
     return;
   }
-  const target = getEntries(student,key,monday);
-  target[0].foco = source[0]?.foco || '';
-  target[0].atividade = source[0]?.atividade || '';
-  target[0].obs = source[0]?.obs || '';
-  target[0].status = 'Planejada';
-  mountEditForm(article);
+  const target = getEntries(student,key,monday)[0];
+  target.foco = source[0]?.foco || '';
+  target.atividade = source[0]?.atividade || '';
+  target.obs = source[0]?.obs || '';
+  target.status = 'Planejada';
+  refreshRowValues(article, target);
   markDirty(article);
-  renderWeekLine(article);
 }
 /* ========= AUTOSAVE SEGURO ========= */
 function bumpRevision(student,week){
@@ -1636,7 +1610,7 @@ function bindEvents(){
     }
     if (ev.key==='Escape'){
       const open = document.querySelector('.week.open');
-      if (open) cancelEdit(open);
+      if (open) toggleDetails(open);
       else closeSidebar();
     }
   });
