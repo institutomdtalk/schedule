@@ -520,7 +520,9 @@ body{
 .eyebrow{
   margin-bottom:12px;color:rgba(255,255,255,.58);
   font-size:9px;font-weight:800;letter-spacing:.22em;
+  display:flex;align-items:center;gap:10px;
 }
+.eyebrow::before{content:'';width:26px;height:1px;background:rgba(216,180,120,.75)}
 .student-head h1{
   color:#fff;
   font-size:clamp(38px,4.4vw,56px);
@@ -552,10 +554,10 @@ body{
   content:"";position:absolute;inset:auto 18px 0;height:2px;border-radius:9px 9px 0 0;
   background:linear-gradient(90deg,var(--vinho),var(--vinho-3));opacity:.12;
 }
-.metric b{font-family:var(--sans);font-size:25px;font-weight:750;letter-spacing:-.035em;color:var(--tinta)}
+.metric b{font-family:var(--serif-fine);font-size:29px;font-weight:600;letter-spacing:0;color:var(--vinho)}
 .metric span{margin-top:8px;font-size:8.5px;font-weight:800;letter-spacing:.12em;color:var(--tinta-2)}
 .progress-card{background:linear-gradient(145deg,#fff,#FBF8F9)}
-.progress-top b{color:var(--vinho)}
+.progress-top b{color:var(--vinho);font-size:24px}
 .progress{height:6px;background:#ECE9EA}
 .progress i{background:linear-gradient(90deg,var(--vinho),#A23C58)}
 
