@@ -471,8 +471,17 @@ body{
   font-size:11px;font-weight:800;
   background:#F0E9EB;color:var(--vinho);
 }
+.avatar[data-color="0"]{background:var(--plan-bg);color:var(--plan)}
+.avatar[data-color="1"]{background:var(--curso-bg);color:var(--curso)}
+.avatar[data-color="2"]{background:var(--feito-bg);color:var(--feito)}
+.avatar[data-color="3"]{background:var(--remar-bg);color:var(--remar)}
+.avatar[data-color="4"]{background:#FBEEE7;color:#A85A3D}
+.avatar[data-color="5"]{background:#E6F3F1;color:#2E7A72}
+.avatar[data-color="6"]{background:#FBEEF0;color:#B5657A}
+.avatar[data-color="7"]{background:#EFEEF7;color:#5C5FA8}
 .student.active .avatar{
   background:linear-gradient(145deg,var(--vinho),var(--vinho-3));
+  color:#fff;
   box-shadow:0 5px 14px rgba(116,31,51,.22);
   border-radius:14px;
 }
@@ -967,6 +976,13 @@ function initials(name){
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
   return ((parts[0]?.[0] || '') + (parts.length > 1 ? parts[parts.length-1][0] : '')).toUpperCase();
 }
+const AVATAR_PALETTE_SIZE = 8;
+function colorIndexForName(name){
+  let sum = 0;
+  const s = String(name);
+  for (let i = 0; i < s.length; i++) sum += s.charCodeAt(i);
+  return sum % AVATAR_PALETTE_SIZE;
+}
 function recordKey(student, week){ return student + '::' + week; }
 function currentData(){
   if (!state.student) return {};
@@ -1182,7 +1198,7 @@ function renderStudents(){
     const btn = document.createElement('button');
     btn.className = 'student' + (name === state.student ? ' active' : '');
     btn.type = 'button';
-    btn.innerHTML = '<span class="avatar">' + escapeHTML(initials(name)) + '</span><span class="student-name" title="' + escapeHTML(name) + '">' + escapeHTML(name) + '</span><span class="student-arrow" aria-hidden="true">→</span>';
+    btn.innerHTML = '<span class="avatar" data-color="' + colorIndexForName(name) + '">' + escapeHTML(initials(name)) + '</span><span class="student-name" title="' + escapeHTML(name) + '">' + escapeHTML(name) + '</span><span class="student-arrow" aria-hidden="true">→</span>';
     btn.addEventListener('click', () => selectStudent(name));
     li.appendChild(btn);
     frag.appendChild(li);
