@@ -519,7 +519,16 @@ body{
     radial-gradient(circle at 88% 0,rgba(255,255,255,.13),transparent 18rem),
     linear-gradient(118deg,#3A101A 0%,#591426 55%,#792039 100%);
   box-shadow:0 18px 44px rgba(72,17,31,.16);
+  transition:background .3s ease,box-shadow .3s ease;
 }
+.student-head[data-color="0"]{background:radial-gradient(circle at 88% 0,rgba(255,255,255,.13),transparent 18rem),linear-gradient(118deg,#0F2333 0%,#1B3E56 55%,#2D5D7C 100%);box-shadow:0 18px 44px rgba(20,55,78,.18)}
+.student-head[data-color="1"]{background:radial-gradient(circle at 88% 0,rgba(255,255,255,.13),transparent 18rem),linear-gradient(118deg,#33230A 0%,#5A3B0C 55%,#8A5C10 100%);box-shadow:0 18px 44px rgba(90,59,12,.18)}
+.student-head[data-color="2"]{background:radial-gradient(circle at 88% 0,rgba(255,255,255,.13),transparent 18rem),linear-gradient(118deg,#0F2417 0%,#1D4229 55%,#2E5F3D 100%);box-shadow:0 18px 44px rgba(29,66,41,.18)}
+.student-head[data-color="3"]{background:radial-gradient(circle at 88% 0,rgba(255,255,255,.13),transparent 18rem),linear-gradient(118deg,#25142C 0%,#3F2249 55%,#5E3268 100%);box-shadow:0 18px 44px rgba(63,34,73,.18)}
+.student-head[data-color="4"]{background:radial-gradient(circle at 88% 0,rgba(255,255,255,.13),transparent 18rem),linear-gradient(118deg,#331A0F 0%,#582B18 55%,#7E3F23 100%);box-shadow:0 18px 44px rgba(88,43,24,.18)}
+.student-head[data-color="5"]{background:radial-gradient(circle at 88% 0,rgba(255,255,255,.13),transparent 18rem),linear-gradient(118deg,#0D2622 0%,#19453D 55%,#26635A 100%);box-shadow:0 18px 44px rgba(25,69,61,.18)}
+.student-head[data-color="6"]{background:radial-gradient(circle at 88% 0,rgba(255,255,255,.13),transparent 18rem),linear-gradient(118deg,#33161E 0%,#582632 55%,#7E374A 100%);box-shadow:0 18px 44px rgba(88,38,50,.18)}
+.student-head[data-color="7"]{background:radial-gradient(circle at 88% 0,rgba(255,255,255,.13),transparent 18rem),linear-gradient(118deg,#181A33 0%,#292C58 55%,#3D4180 100%);box-shadow:0 18px 44px rgba(41,44,88,.18)}
 .student-head::after{
   content:"";position:absolute;right:-30px;bottom:-70px;width:260px;height:260px;border-radius:50%;
   border:1px solid rgba(255,255,255,.08);box-shadow:0 0 0 35px rgba(255,255,255,.025),0 0 0 70px rgba(255,255,255,.018);
@@ -857,7 +866,7 @@ body{
       </section>
 
       <section id="content" hidden>
-        <header class="student-head">
+        <header class="student-head" id="studentHead">
           <div class="student-head-main">
             <div class="eyebrow">Registro pedagógico</div>
             <h1 id="studentName"></h1>
@@ -1252,6 +1261,7 @@ async function selectStudent(student){
 
   $('empty').hidden = true;
   $('content').hidden = false;
+  $('studentHead').dataset.color = colorIndexForName(student);
   $('studentName').textContent = student;
   $('summary').innerHTML = '<div class="metric"><b>—</b><span>Carregando</span></div>';
   $('draftNote').textContent = '';
